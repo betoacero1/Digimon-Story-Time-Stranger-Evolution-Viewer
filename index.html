@@ -1,0 +1,4478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digimon Story: Time Stranger Evolution Network</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', monospace;
+            background: #0d0d0d;
+            color: #fff;
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+        }
+
+        /* Animated background */
+        #particles-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0d0d0d 0%, #1a1a2e 50%, #0d0d0d 100%);
+            z-index: -2;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(0, 150, 255, 0.5);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            from {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            to {
+                transform: translateY(-100vh) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        /* Main container */
+        #graph-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        #graph-container:active {
+            cursor: grabbing;
+        }
+
+        /* PS5-style UI panels */
+        .ui-panel {
+            position: absolute;
+            background: linear-gradient(135deg, rgba(13, 13, 13, 0.95), rgba(26, 26, 46, 0.95));
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 0 40px rgba(0, 150, 255, 0.3),
+                inset 0 0 20px rgba(0, 150, 255, 0.1);
+            z-index: 100;
+            animation: panelGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes panelGlow {
+            from {
+                box-shadow: 
+                    0 0 40px rgba(0, 150, 255, 0.3),
+                    inset 0 0 20px rgba(0, 150, 255, 0.1);
+            }
+            to {
+                box-shadow: 
+                    0 0 60px rgba(0, 150, 255, 0.5),
+                    inset 0 0 30px rgba(0, 150, 255, 0.2);
+            }
+        }
+
+        /* Top controls */
+        .top-controls {
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .ps5-button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #0096ff, #0048ff);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 1px;
+        }
+
+        .ps5-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .ps5-button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .ps5-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 150, 255, 0.5);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .search-box {
+            padding: 12px 40px 12px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 150, 255, 0.5);
+            border-radius: 30px;
+            color: white;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            width: 250px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .search-box:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 20px rgba(0, 150, 255, 0.5);
+        }
+
+        .clear-search-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            display: none; /* Hidden by default */
+        }
+
+        .clear-search-btn:hover {
+            color: white;
+        }
+
+        /* Zoom controls */
+        .zoom-controls {
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .zoom-btn {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, rgba(0, 150, 255, 0.2), rgba(0, 72, 255, 0.2));
+            border: 2px solid rgba(0, 150, 255, 0.5);
+            border-radius: 15px;
+            color: #0096ff;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .zoom-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 150, 255, 0.4), rgba(0, 72, 255, 0.4));
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0, 150, 255, 0.6);
+        }
+
+        /* Info panel */
+        .info-panel {
+            top: 20px;
+            left: 20px;
+            max-width: 300px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: all 0.5s ease;
+        }
+
+        .info-panel.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .info-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: #0096ff;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(0, 150, 255, 0.8);
+        }
+
+        .info-pills {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .info-stage {
+            display: inline-block;
+            padding: 5px 15px;
+            background: linear-gradient(135deg, #ff006e, #8338ec);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-attribute {
+            display: inline-block;
+            padding: 5px 15px;
+            background: linear-gradient(135deg, #00c9ff, #92fe9d);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-section {
+            margin-bottom: 20px;
+        }
+
+        .info-section h3 {
+            font-size: 12px;
+            color: rgba(0, 150, 255, 0.8);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .evolution-item {
+            padding: 8px 12px;
+            background: rgba(0, 150, 255, 0.1);
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+
+        .evolution-item:hover {
+            background: rgba(0, 150, 255, 0.2);
+            transform: translateX(5px);
+            box-shadow: 0 0 15px rgba(0, 150, 255, 0.5);
+        }
+
+        .info-panel .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, rgba(0, 150, 255, 0.2), rgba(0, 72, 255, 0.2));
+            border: 1px solid rgba(0, 150, 255, 0.5);
+            border-radius: 50%;
+            color: #0096ff;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .info-panel .close-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 150, 255, 0.4), rgba(0, 72, 255, 0.4));
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(0, 150, 255, 0.6);
+        }
+
+        /* Stats panel */
+        .stats-panel {
+            z-index: 1;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 15px 20px;
+            background: rgba(0, 150, 255, 0.1);
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            border-radius: 15px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 900;
+            color: #0096ff;
+            text-shadow: 0 0 10px rgba(0, 150, 255, 0.8);
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        /* Loading animation */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            color: #0096ff;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: linear-gradient(135deg, rgba(13, 13, 13, 0.98), rgba(26, 26, 46, 0.98));
+            border: 1px solid rgba(0, 150, 255, 0.5);
+            border-radius: 10px;
+            padding: 10px 15px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 150, 255, 0.4);
+        }
+
+        .tooltip.active {
+            opacity: 1;
+        }
+
+        /* SVG styles */
+        .node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .node:hover {
+            filter: brightness(1.5);
+        }
+
+        .node.search-match {
+            stroke: #ffd700 !important;
+            stroke-width: 3px !important;
+        }
+
+        .node-label {
+            font-family: 'Orbitron', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            fill: white;
+            text-anchor: middle;
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+
+        .link {
+            fill: none;
+            stroke-width: 2;
+            opacity: 0.6;
+            transition: all 0.3s ease;
+        }
+
+        .link-arrow {
+            fill: rgba(0, 150, 255, 0.8);
+        }
+
+        /* Legend */
+        .legend {
+            top: 20px;
+            right: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Data Credit */
+        .data-credit {
+            position: absolute;
+            bottom: 10px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .data-credit-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            background: rgba(0, 150, 255, 0.2);
+            border: 1px solid rgba(0, 150, 255, 0.5);
+            border-radius: 50%;
+            color: #0096ff;
+            font-size: 12px;
+            font-style: italic;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            order: 2;
+        }
+
+        .data-credit-text {
+            visibility: hidden;
+            opacity: 0;
+            white-space: nowrap;
+            margin-right: 10px;
+            padding: 5px 10px;
+            background: linear-gradient(135deg, rgba(13, 13, 13, 0.95), rgba(26, 26, 46, 0.95));
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            border-radius: 10px;
+            font-size: 11px;
+            transition: all 0.4s ease;
+            transform: translateX(20px);
+            order: 1;
+        }
+        
+        .data-credit:hover .data-credit-text {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .data-credit a {
+            color: #00c9ff;
+            text-decoration: none;
+        }
+
+        .data-credit a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-bg"></div>
+    
+    <svg id="graph-container"></svg>
+    
+    <div class="ui-panel top-controls">
+        <div class="search-container">
+            <input type="text" class="search-box" id="searchBox" placeholder="Search Digimon...">
+            <button class="clear-search-btn" id="clearSearchBtn">×</button>
+        </div>
+    </div>
+
+    <div class="ui-panel zoom-controls">
+        <button class="zoom-btn" onclick="zoomIn()">+</button>
+        <button class="zoom-btn" onclick="zoomOut()">−</button>
+        <button class="zoom-btn" onclick="resetZoom()">⟲</button>
+    </div>
+
+    <div class="ui-panel info-panel" id="infoPanel">
+        <div id="infoContent"></div>
+    </div>
+
+    <div class="ui-panel stats-panel">
+        <div class="stat-card">
+            <div class="stat-value" id="nodeCount">0</div>
+            <div class="stat-label">Digimon</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="edgeCount">0</div>
+            <div class="stat-label">Evolutions</div>
+        </div>
+    </div>
+
+    <div class="ui-panel legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background: #00ff00;"></div>
+            <span>Baby</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #00ffff;"></div>
+            <span>In-Training</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #0096ff;"></div>
+            <span>Rookie</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #ff6b00;"></div>
+            <span>Champion</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #ff00ff;"></div>
+            <span>Ultimate</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #ff0066;"></div>
+            <span>Mega</span>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <div class="data-credit">
+        <span class="data-credit-text">Data Credit: <a href="https://docs.google.com/spreadsheets/d/1TfV-n7XnBxIiOYieuGrS931HOVey1SehjRasgmCI7OM/htmlview" target="_blank" rel="noopener noreferrer">https://docs.google.com/spreadsheets/d/1TfV-n7XnBxIiOYieuGrS931HOVey1SehjRasgmCI7OM/htmlview</a></span>
+        <span class="data-credit-icon">i</span>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script>
+        // Generate particles for background
+        function createParticles() {
+            const particlesBg = document.getElementById('particles-bg');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                particlesBg.appendChild(particle);
+            }
+        }
+        createParticles();
+
+        // Graph data structure
+        class DigimonGraph {
+            constructor() {
+                this.nodes = [];
+                this.links = [];
+                this.nodeMap = new Map();
+            }
+
+            clear() {
+                this.nodes = [];
+                this.links = [];
+                this.nodeMap.clear();
+            }
+
+            addNode(id, data = {}) {
+                if (!this.nodeMap.has(id)) {
+                    const node = {
+                        id,
+                        name: data.name || id,
+                        stage: data.stage || 'Unknown',
+                        ...data
+                    };
+                    this.nodes.push(node);
+                    this.nodeMap.set(id, node);
+                }
+                return this.nodeMap.get(id);
+            }
+
+            addLink(source, target) {
+                const sourceNode = this.addNode(source);
+                const targetNode = this.addNode(target);
+                this.links.push({
+                    source: sourceNode.id,
+                            target: targetNode.id
+                });
+            }
+
+            getNode(id) {
+                return this.nodeMap.get(id);
+            }
+
+            getConnections(nodeId) {
+                const evolutions = this.links
+                    .filter(l => l.source === nodeId || (l.source.id && l.source.id === nodeId))
+                    .map(l => typeof l.target === 'object' ? l.target.id : l.target);
+                
+                const deEvolutions = this.links
+                    .filter(l => l.target === nodeId || (l.target.id && l.target.id === nodeId))
+                    .map(l => typeof l.source === 'object' ? l.source.id : l.source);
+
+                return { evolutions, deEvolutions };
+            }
+
+            getDistances(startNodeId) {
+                const distances = new Map();
+                const queue = [[startNodeId, 0]];
+                const visited = new Set([startNodeId]);
+                distances.set(startNodeId, 0);
+
+                let head = 0;
+                while(head < queue.length) {
+                    const [currentId, dist] = queue[head++];
+
+                    // Evolutions
+                    this.links
+                        .filter(l => (l.source.id || l.source) === currentId)
+                        .forEach(l => {
+                            const targetId = l.target.id || l.target;
+                            if (!visited.has(targetId)) {
+                                visited.add(targetId);
+                                distances.set(targetId, dist + 1);
+                                queue.push([targetId, dist + 1]);
+                            }
+                        });
+
+                    // De-evolutions
+                    this.links
+                        .filter(l => (l.target.id || l.target) === currentId)
+                        .forEach(l => {
+                            const sourceId = l.source.id || l.source;
+                            if (!visited.has(sourceId)) {
+                                visited.add(sourceId);
+                                distances.set(sourceId, dist + 1);
+                                queue.push([sourceId, dist + 1]);
+                            }
+                        });
+                }
+                return distances;
+            }
+        }
+
+        // Global variables
+        let graph = new DigimonGraph();
+        let simulation;
+        let svg, g, link, node, nodeLabel, zoom;
+        let currentTransform = d3.zoomIdentity;
+        let selectedNode = null;
+
+        // Stage colors
+        const stageColors = {
+            'Baby': '#00ff00',
+            'In-Training': '#55ffcc',
+            'In-Training II': '#00ffff',
+            'Rookie': '#0096ff',
+            'Armor': '#00ccff',
+            'Champion': '#ff6b00',
+            'Ultimate': '#ff00ff',
+            'Mega': '#ff0066',
+            'Unknown': '#666666'
+        };
+
+        // Calculate Y position based on Digimon stage for hierarchical layout
+        const stageYPosition = (stage, height) => {
+            const order = {
+                'Baby': 0,
+                'In-Training': 1,
+                'In-Training II': 2,
+                'Rookie': 3,
+                'Armor': 4,
+                'Golden Armor': 5,
+                'Human Hybrid': 6,
+                'Beast Hybrid': 7,
+                'Fusion Hybrid': 8,
+                'Champion': 9,
+                'Ultimate': 10,
+                'Mega': 11,
+            };
+            const numLevels = Object.keys(order).length;
+            const level = order[stage];
+            if (level !== undefined) {
+                // Distribute levels across 80% of the screen height, with some margin
+                const usableHeight = height * 0.8;
+                const topMargin = height * 0.1;
+                return topMargin + (level * usableHeight / (numLevels - 1));
+            }
+            return height / 2; // Default for 'Unknown' etc.
+        };
+
+        // Initialize D3 visualization
+        function initVisualization() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            // Clear existing
+            d3.select('#graph-container').selectAll('*').remove();
+
+            svg = d3.select('#graph-container')
+                .attr('width', width)
+                .attr('height', height);
+
+            // Define arrow markers
+            svg.append('defs').selectAll('marker')
+                .data(['arrow'])
+                .enter().append('marker')
+                .attr('id', d => d)
+                .attr('viewBox', '0 -5 10 10')
+                .attr('refX', 25)
+                .attr('refY', 0)
+                .attr('markerWidth', 6)
+                .attr('markerHeight', 6)
+                .attr('orient', 'auto')
+                .append('path')
+                .attr('d', 'M0,-5L10,0L0,5')
+                .attr('class', 'link-arrow');
+
+            g = svg.append('g');
+
+            // Initialize zoom behavior
+            zoom = d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on('zoom', (event) => {
+                    currentTransform = event.transform;
+                    g.attr('transform', event.transform);
+                });
+
+            svg.call(zoom);
+
+            // Initialize force simulation
+            simulation = d3.forceSimulation()
+                .force('link', d3.forceLink().id(d => d.id).distance(150).strength(0.5))
+                .force('charge', d3.forceManyBody().strength(-500))
+                .force('y', d3.forceY(d => stageYPosition(d.stage, height)).strength(0.9))
+                .force('x', d3.forceX(d => d.targetX).strength(0.2))
+                .force('collision', d3.forceCollide().radius(30));
+        }
+
+        // Update visualization
+        function updateVisualization() {
+            const nodes = graph.nodes;
+            const links = graph.links;
+            const width = window.innerWidth;
+
+            // --- Barycenter layout logic to reduce line crossing ---
+            const stageOrder = ['Baby', 'In-Training', 'In-Training II', 'Rookie', 'Armor', 'Champion', 'Ultimate', 'Mega'];
+            const nodesByStage = new Map(stageOrder.map(s => [s, []]));
+            const parents = new Map();
+            const children = new Map();
+
+            nodes.forEach(node => {
+                if (nodesByStage.has(node.stage)) {
+                    nodesByStage.get(node.stage).push(node);
+                }
+                parents.set(node.id, []);
+                children.set(node.id, []);
+            });
+
+            links.forEach(link => {
+                const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+                const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+                const sourceNode = graph.getNode(sourceId);
+                const targetNode = graph.getNode(targetId);
+
+                if (children.has(sourceId) && targetNode) {
+                    children.get(sourceId).push(targetNode);
+                }
+                if (parents.has(targetId) && sourceNode) {
+                    parents.get(targetId).push(sourceNode);
+                }
+            });
+
+            // Initial ordering within each stage
+            stageOrder.forEach(stage => {
+                const stageNodes = nodesByStage.get(stage) || [];
+                // Use existing order to maintain stability, otherwise use array order
+                stageNodes.sort((a, b) => (a.order || 0) - (b.order || 0));
+                stageNodes.forEach((node, index) => node.order = index);
+            });
+
+            // Iteratively improve order using barycenter heuristic
+            const iterations = 8; // 2 down, 2 up
+            for (let i = 0; i < iterations; i++) {
+                // Downward pass (based on parents)
+                for (const stage of stageOrder) {
+                    const stageNodes = nodesByStage.get(stage) || [];
+                    stageNodes.forEach(node => {
+                        const nodeParents = parents.get(node.id) || [];
+                        if (nodeParents.length > 0) {
+                            let sum = 0;
+                            nodeParents.forEach(p => sum += (p.order || 0));
+                            node.barycenter = sum / nodeParents.length;
+                        } else {
+                            node.barycenter = node.order;
+                        }
+                    });
+                    stageNodes.sort((a, b) => a.barycenter - b.barycenter);
+                    stageNodes.forEach((node, index) => node.order = index);
+                }
+
+                // Upward pass (based on children)
+                for (const stage of stageOrder.slice().reverse()) {
+                    const stageNodes = nodesByStage.get(stage) || [];
+                    stageNodes.forEach(node => {
+                        const nodeChildren = children.get(node.id) || [];
+                        if (nodeChildren.length > 0) {
+                            let sum = 0;
+                            nodeChildren.forEach(c => sum += (c.order || 0));
+                            node.barycenter = sum / nodeChildren.length;
+                        } else {
+                            node.barycenter = node.order;
+                        }
+                    });
+                    stageNodes.sort((a, b) => a.barycenter - b.barycenter);
+                    stageNodes.forEach((node, index) => node.order = index);
+                }
+            }
+
+            // Assign targetX based on final order
+            nodes.forEach(node => {
+                const stageNodes = nodesByStage.get(node.stage);
+                if (stageNodes && stageNodes.length > 0) {
+                    const count = stageNodes.length;
+                    const usableWidth = width * 0.8;
+                    const leftMargin = width * 0.1;
+                    if (count > 1) {
+                        node.targetX = leftMargin + (node.order * usableWidth / (count - 1));
+                    } else {
+                        node.targetX = width / 2;
+                    }
+                } else {
+                    node.targetX = width / 2;
+                }
+            });
+            // --- End of layout logic ---
+
+            // Update stats
+            document.getElementById('nodeCount').textContent = nodes.length;
+            document.getElementById('edgeCount').textContent = links.length;
+
+            // Links
+            g.selectAll('.link').remove();
+            link = g.append('g')
+                .selectAll('line')
+                .data(links)
+                .enter().append('line')
+                .attr('class', 'link')
+                .attr('stroke', d => {
+                    const sourceName = typeof d.source === 'object' ? d.source.id : d.source;
+                    const targetName = typeof d.target === 'object' ? d.target.id : d.target;
+                    const gradientId = `gradient-${sourceName}-${targetName}`.replace(/[^a-zA-Z0-9-]/g, '_');
+
+                    const gradient = g.append('linearGradient')
+                        .attr('id', gradientId)
+                        .attr('gradientUnits', 'userSpaceOnUse');
+                    gradient.append('stop')
+                        .attr('offset', '0%')
+                        .attr('stop-color', '#0096ff')
+                        .attr('stop-opacity', 0.6);
+                    gradient.append('stop')
+                        .attr('offset', '100%')
+                        .attr('stop-color', '#ff00ff')
+                        .attr('stop-opacity', 0.6);
+                    return `url(#${gradientId})`;
+                })
+                .attr('marker-end', 'url(#arrow)');
+
+            // Nodes
+            g.selectAll('.node-group').remove();
+            const nodeGroup = g.append('g')
+                .selectAll('g')
+                .data(nodes)
+                .enter().append('g')
+                .attr('class', 'node-group')
+                .call(d3.drag()
+                    .on('start', dragStarted)
+                    .on('drag', dragged)
+                    .on('end', dragEnded));
+
+            // Node circles
+            node = nodeGroup.append('circle')
+                .attr('class', 'node')
+                .attr('r', 20)
+                .attr('fill', d => stageColors[d.stage] || stageColors['Unknown'])
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 2)
+                .on('click', (event, d) => selectNode(d))
+                .on('mouseover', (event, d) => showTooltip(event, d))
+                .on('mouseout', hideTooltip);
+
+            // Glow effect
+            nodeGroup.append('circle')
+                .attr('r', 25)
+                .attr('fill', 'none')
+                .attr('stroke', d => stageColors[d.stage] || stageColors['Unknown'])
+                .attr('stroke-width', 1)
+                .attr('opacity', 0.5)
+                .style('filter', 'blur(5px)');
+
+            // Node labels
+            nodeLabel = nodeGroup.append('text')
+                .attr('class', 'node-label')
+                .attr('dy', 35)
+                .text(d => d.name);
+
+            // Update simulation
+            simulation.nodes(nodes);
+            simulation.force('link').links(links);
+            simulation.alpha(1).restart();
+
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+
+                nodeGroup.attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+        }
+
+        // Drag functions
+        function dragStarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragEnded(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        // Highlight nodes based on search and selection
+        function updateHighlights() {
+            const query = document.getElementById('searchBox').value.toLowerCase();
+            const hasQuery = query.length > 0;
+
+            const distances = selectedNode ? graph.getDistances(selectedNode.id) : null;
+            const falloffBase = 0.7;
+            const minNodeOpacity = 0.15;
+            const minLinkOpacity = 0.1;
+
+            // Add/remove search-match class for yellow stroke
+            g.selectAll('.node').classed('search-match', d => {
+                return hasQuery && d.name.toLowerCase().includes(query);
+            });
+
+            // Update opacity for nodes and labels
+            g.selectAll('.node, .node-label').attr('opacity', d => {
+                const isSearchMatch = hasQuery && d.name.toLowerCase().includes(query);
+
+                if (distances) { // A node is selected
+                    if (distances.has(d.id)) { // Node is connected to selection
+                        const dist = distances.get(d.id);
+                        return Math.max(minNodeOpacity, Math.pow(falloffBase, dist - 1));
+                    }
+                    // Node is NOT connected to selection
+                    return isSearchMatch ? 1 : minNodeOpacity * 0.5;
+                } else { // No node is selected
+                    if (hasQuery) { // Only search is active
+                        return isSearchMatch ? 1 : 0.2;
+                    }
+                }
+                return 1; // No search, no selection
+            });
+
+            // Update link opacity
+            g.selectAll('.link').attr('opacity', d_link => {
+                if (distances) { // A node is selected
+                    const sourceId = d_link.source.id || d_link.source;
+                    const targetId = d_link.target.id || d_link.target;
+                    if (distances.has(sourceId) && distances.has(targetId)) {
+                        const dist = Math.min(distances.get(sourceId), distances.get(targetId));
+                        return Math.max(minLinkOpacity, 0.8 * Math.pow(falloffBase, dist));
+                    }
+                    return minLinkOpacity * 0.5;
+                }
+                return 0.6; // Default opacity when no node is selected
+            });
+        }
+
+        // Node selection
+        function selectNode(node) {
+            selectedNode = node;
+            updateHighlights();
+            
+            const connections = graph.getConnections(node.id);
+            updateInfoPanel(node, connections);
+        }
+
+        // Update info panel
+        function updateInfoPanel(node, connections) {
+            const panel = document.getElementById('infoPanel');
+            const content = document.getElementById('infoContent');
+            
+            const attributeHTML = node.attribute && node.attribute !== 'None' ? `<div class="info-attribute">${node.attribute}</div>` : '';
+
+            let html = `
+                <button class="close-btn" onclick="closeInfoPanel()">×</button>
+                <div class="info-title">${node.name}</div>
+                <div class="info-pills">
+                    <div class="info-stage">${node.stage}</div>
+                    ${attributeHTML}
+                </div>
+            `;
+
+            if (connections.deEvolutions.length > 0) {
+                html += `
+                    <div class="info-section">
+                        <h3>← De-Evolutions</h3>
+                        ${connections.deEvolutions.map(id => {
+                            const n = graph.getNode(id);
+                            return `<div class="evolution-item" onclick="focusNode('${id}')">${n.name}</div>`;
+                        }).join('')}
+                    </div>
+                `;
+            }
+
+            if (connections.evolutions.length > 0) {
+                html += `
+                    <div class="info-section">
+                        <h3>→ Evolutions</h3>
+                        ${connections.evolutions.map(id => {
+                            const n = graph.getNode(id);
+                            return `<div class="evolution-item" onclick="focusNode('${id}')">${n.name}</div>`;
+                        }).join('')}
+                    </div>
+                `;
+            }
+
+            content.innerHTML = html;
+            panel.classList.add('active');
+        }
+
+        function closeInfoPanel() {
+            document.getElementById('infoPanel').classList.remove('active');
+            selectedNode = null;
+            updateHighlights();
+        }
+
+        // Focus on node
+        function focusNode(nodeId) {
+            const node = graph.getNode(nodeId);
+            if (!node) return;
+
+            // Animate to node
+            const scale = 1.25;
+            const transform = d3.zoomIdentity
+                .translate(window.innerWidth / 2, window.innerHeight / 2)
+                .scale(scale)
+                .translate(-node.x, -node.y);
+
+            svg.transition()
+                .duration(750)
+                .call(zoom.transform, transform);
+
+            selectNode(node);
+        }
+
+        // Tooltip functions
+        function showTooltip(event, d) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.innerHTML = `
+                <strong>${d.name}</strong><br>
+                Stage: ${d.stage}<br>
+                Attribute: ${d.attribute || 'N/A'}
+            `;
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY - 10) + 'px';
+            tooltip.classList.add('active');
+        }
+
+        function hideTooltip() {
+            document.getElementById('tooltip').classList.remove('active');
+        }
+
+        // Zoom controls
+        function zoomIn() {
+            svg.transition().call(zoom.scaleBy, 1.3);
+        }
+
+        function zoomOut() {
+            svg.transition().call(zoom.scaleBy, 0.7);
+        }
+
+        function resetZoom() {
+            svg.transition().call(zoom.transform, d3.zoomIdentity);
+        }
+
+        // Search functionality
+        const searchBox = document.getElementById('searchBox');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+        searchBox.addEventListener('input', (e) => {
+            updateHighlights();
+            clearSearchBtn.style.display = e.target.value ? 'block' : 'none';
+        });
+
+        clearSearchBtn.addEventListener('click', () => {
+            searchBox.value = '';
+            updateHighlights();
+            clearSearchBtn.style.display = 'none';
+            searchBox.focus();
+        });
+
+        // Load sample data
+        function loadSampleData() {
+            const sampleData = {
+                "digimon": [{
+                    "name": "Kuramon",
+                    "stage": "In-Training",
+                    "attribute": "None",
+                    "number": "1"
+                }, {"name": "Choromon", "stage": "In-Training", "attribute": "None", "number": "2"}, {
+                    "name": "Dodomon",
+                    "stage": "In-Training",
+                    "attribute": "None",
+                    "number": "3"
+                }, {"name": "Bubbmon", "stage": "In-Training", "attribute": "None", "number": "4"}, {
+                    "name": "Punimon",
+                    "stage": "In-Training",
+                    "attribute": "None",
+                    "number": "5"
+                }, {"name": "Botamon", "stage": "In-Training", "attribute": "None", "number": "6"}, {
+                    "name": "Poyomon",
+                    "stage": "In-Training",
+                    "attribute": "None",
+                    "number": "7"
+                }, {
+                    "name": "Caprimon",
+                    "stage": "In-Training II",
+                    "attribute": "None",
+                    "number": "8"
+                }, {
+                    "name": "Koromon",
+                    "stage": "In-Training II",
+                    "attribute": "None",
+                    "number": "9"
+                }, {
+                    "name": "Tanemon",
+                    "stage": "In-Training II",
+                    "attribute": "None",
+                    "number": "10"
+                }, {
+                    "name": "Tunomon",
+                    "stage": "In-Training II",
+                    "attribute": "None",
+                    "number": "11"
+                }, {
+                    "name": "Tsumemon",
+                    "stage": "In-Training II",
+                    "attribute": "None",
+                    "number": "12"
+                }, {
+                    "name": "Tokomon",
+                    "stage": "In-Training II",
+                    "attribute": "None",
+                    "number": "13"
+                }, {
+                    "name": "Dorimon",
+                    "stage": "In-Training II",
+                    "attribute": "None",
+                    "number": "14"
+                }, {
+                    "name": "Nyaromon",
+                    "stage": "In-Training II",
+                    "attribute": "None",
+                    "number": "15"
+                }, {
+                    "name": "Pagumon",
+                    "stage": "In-Training II",
+                    "attribute": "None",
+                    "number": "16"
+                }, {
+                    "name": "Pyocomon",
+                    "stage": "In-Training II",
+                    "attribute": "None",
+                    "number": "17"
+                }, {
+                    "name": "Pukamon",
+                    "stage": "In-Training II",
+                    "attribute": "None",
+                    "number": "18"
+                }, {
+                    "name": "Mochimon",
+                    "stage": "In-Training II",
+                    "attribute": "None",
+                    "number": "19"
+                }, {
+                    "name": "Wanyamon",
+                    "stage": "In-Training II",
+                    "attribute": "None",
+                    "number": "20"
+                }, {"name": "Agumon", "stage": "Rookie", "attribute": "Vaccine", "number": "21"}, {
+                    "name": "Kudamon",
+                    "stage": "Rookie",
+                    "attribute": "Vaccine",
+                    "number": "22"
+                }, {"name": "Gomamon", "stage": "Rookie", "attribute": "Vaccine", "number": "23"}, {
+                    "name": "Coronamon",
+                    "stage": "Rookie",
+                    "attribute": "Vaccine",
+                    "number": "24"
+                }, {"name": "Zubamon", "stage": "Rookie", "attribute": "Vaccine", "number": "25"}, {
+                    "name": "Solarmon",
+                    "stage": "Rookie",
+                    "attribute": "Vaccine",
+                    "number": "26"
+                }, {
+                    "name": "Terriermon",
+                    "stage": "Rookie",
+                    "attribute": "Vaccine",
+                    "number": "27"
+                }, {
+                    "name": "Tentomon",
+                    "stage": "Rookie",
+                    "attribute": "Vaccine",
+                    "number": "28"
+                }, {
+                    "name": "Toy Agumon",
+                    "stage": "Rookie",
+                    "attribute": "Vaccine",
+                    "number": "29"
+                }, {"name": "Bakumon", "stage": "Rookie", "attribute": "Vaccine", "number": "30"}, {
+                    "name": "Hyokomon",
+                    "stage": "Rookie",
+                    "attribute": "Vaccine",
+                    "number": "31"
+                }, {"name": "Piyomon", "stage": "Rookie", "attribute": "Vaccine", "number": "32"}, {
+                    "name": "Falcomon",
+                    "stage": "Rookie",
+                    "attribute": "Vaccine",
+                    "number": "33"
+                }, {"name": "Plotmon", "stage": "Rookie", "attribute": "Vaccine", "number": "34"}, {
+                    "name": "Bearmon",
+                    "stage": "Rookie",
+                    "attribute": "Vaccine",
+                    "number": "35"
+                }, {"name": "Penmon", "stage": "Rookie", "attribute": "Vaccine", "number": "36"}, {
+                    "name": "Monodramon",
+                    "stage": "Rookie",
+                    "attribute": "Vaccine",
+                    "number": "37"
+                }, {"name": "Ryudamon", "stage": "Rookie", "attribute": "Vaccine", "number": "38"}, {
+                    "name": "Lucemon",
+                    "stage": "Rookie",
+                    "attribute": "Vaccine",
+                    "number": "39"
+                }, {"name": "Elecmon", "stage": "Rookie", "attribute": "Data", "number": "40"}, {
+                    "name": "Gaomon",
+                    "stage": "Rookie",
+                    "attribute": "Data",
+                    "number": "41"
+                }, {"name": "Ganimon", "stage": "Rookie", "attribute": "Data", "number": "42"}, {
+                    "name": "Gabumon",
+                    "stage": "Rookie",
+                    "attribute": "Data",
+                    "number": "43"
+                }, {"name": "Kamemon", "stage": "Rookie", "attribute": "Data", "number": "44"}, {
+                    "name": "Kokuwamon",
+                    "stage": "Rookie",
+                    "attribute": "Data",
+                    "number": "45"
+                }, {"name": "Gottsumon", "stage": "Rookie", "attribute": "Data", "number": "46"}, {
+                    "name": "Kotemon",
+                    "stage": "Rookie",
+                    "attribute": "Data",
+                    "number": "47"
+                }, {"name": "Shoutmon", "stage": "Rookie", "attribute": "Data", "number": "48"}, {
+                    "name": "Dracomon",
+                    "stage": "Rookie",
+                    "attribute": "Data",
+                    "number": "49"
+                }, {"name": "Dorumon", "stage": "Rookie", "attribute": "Data", "number": "50"}, {
+                    "name": "Patamon",
+                    "stage": "Rookie",
+                    "attribute": "Data",
+                    "number": "51"
+                }, {"name": "Hackmon", "stage": "Rookie", "attribute": "Data", "number": "52"}, {
+                    "name": "Palmon",
+                    "stage": "Rookie",
+                    "attribute": "Data",
+                    "number": "53"
+                }, {"name": "Floramon", "stage": "Rookie", "attribute": "Data", "number": "54"}, {
+                    "name": "Muchomon",
+                    "stage": "Rookie",
+                    "attribute": "Data",
+                    "number": "55"
+                }, {"name": "Lalamon", "stage": "Rookie", "attribute": "Data", "number": "56"}, {
+                    "name": "Lunamon",
+                    "stage": "Rookie",
+                    "attribute": "Data",
+                    "number": "57"
+                }, {"name": "Renamon", "stage": "Rookie", "attribute": "Data", "number": "58"}, {
+                    "name": "Lopmon",
+                    "stage": "Rookie",
+                    "attribute": "Data",
+                    "number": "59"
+                }, {"name": "Impmon", "stage": "Rookie", "attribute": "Virus", "number": "60"}, {
+                    "name": "Otamamon",
+                    "stage": "Rookie",
+                    "attribute": "Virus",
+                    "number": "61"
+                }, {"name": "Gazimon", "stage": "Rookie", "attribute": "Virus", "number": "62"}, {
+                    "name": "Gizamon",
+                    "stage": "Rookie",
+                    "attribute": "Virus",
+                    "number": "63"
+                }, {"name": "Guilmon", "stage": "Rookie", "attribute": "Virus", "number": "64"}, {
+                    "name": "Goburimon",
+                    "stage": "Rookie",
+                    "attribute": "Virus",
+                    "number": "65"
+                }, {"name": "Shamamon", "stage": "Rookie", "attribute": "Virus", "number": "66"}, {
+                    "name": "Shakomon",
+                    "stage": "Rookie",
+                    "attribute": "Virus",
+                    "number": "67"
+                }, {
+                    "name": "Snow Goburimon",
+                    "stage": "Rookie",
+                    "attribute": "Virus",
+                    "number": "68"
+                }, {"name": "Tyumon", "stage": "Rookie", "attribute": "Virus", "number": "69"}, {
+                    "name": "Dracumon",
+                    "stage": "Rookie",
+                    "attribute": "Virus",
+                    "number": "70"
+                }, {
+                    "name": "Hagurumon",
+                    "stage": "Rookie",
+                    "attribute": "Virus",
+                    "number": "71"
+                }, {
+                    "name": "Pico Devimon",
+                    "stage": "Rookie",
+                    "attribute": "Virus",
+                    "number": "72"
+                }, {"name": "Funbeemon", "stage": "Rookie", "attribute": "Virus", "number": "73"}, {
+                    "name": "Betamon",
+                    "stage": "Rookie",
+                    "attribute": "Virus",
+                    "number": "74"
+                }, {"name": "Mushmon", "stage": "Rookie", "attribute": "Virus", "number": "75"}, {
+                    "name": "Armadimon",
+                    "stage": "Rookie",
+                    "attribute": "Free",
+                    "number": "76"
+                }, {"name": "V-Mon", "stage": "Rookie", "attribute": "Free", "number": "77"}, {
+                    "name": "Hawkmon",
+                    "stage": "Rookie",
+                    "attribute": "Free",
+                    "number": "78"
+                }, {"name": "Wormmon", "stage": "Rookie", "attribute": "Free", "number": "79"}, {
+                    "name": "Keramon",
+                    "stage": "Rookie",
+                    "attribute": "Unknown",
+                    "number": "80"
+                }, {
+                    "name": "Aegiomon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "81"
+                }, {
+                    "name": "Ikkakumon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "82"
+                }, {
+                    "name": "Airdramon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "83"
+                }, {
+                    "name": "Angemon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "84"
+                }, {
+                    "name": "Kabuterimon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "85"
+                }, {
+                    "name": "Gargomon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "86"
+                }, {
+                    "name": "Garurumon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "87"
+                }, {
+                    "name": "Ginryumon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "88"
+                }, {"name": "Gryzmon", "stage": "Champion", "attribute": "Vaccine", "number": "89"}, {
+                    "name": "Greymon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "90"
+                }, {
+                    "name": "Coredramon (Blue)",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "91"
+                }, {
+                    "name": "Geo Greymon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "92"
+                }, {
+                    "name": "Strikedramon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "93"
+                }, {
+                    "name": "Snimon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "94"
+                }, {
+                    "name": "Zubaeagermon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "95"
+                }, {
+                    "name": "Sorcerimon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "96"
+                }, {
+                    "name": "Tailmon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "97"
+                }, {
+                    "name": "Dobermon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "98"
+                }, {
+                    "name": "Birdramon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "99"
+                }, {
+                    "name": "Firamon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "100"
+                }, {
+                    "name": "V-Dramon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "101"
+                }, {
+                    "name": "Buraimon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "102"
+                }, {
+                    "name": "Peckmon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "103"
+                }, {
+                    "name": "Mojyamon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "104"
+                }, {
+                    "name": "Yukidarumon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "105"
+                }, {
+                    "name": "Unimon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "106"
+                }, {
+                    "name": "Raptordramon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "107"
+                }, {
+                    "name": "Revolmon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "108"
+                }, {
+                    "name": "Leomon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "109"
+                }, {
+                    "name": "Reppamon",
+                    "stage": "Champion",
+                    "attribute": "Vaccine",
+                    "number": "110"
+                }, {"name": "Icemon", "stage": "Champion", "attribute": "Data", "number": "111"}, {
+                    "name": "Wizarmon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "112"
+                }, {"name": "Witchmon", "stage": "Champion", "attribute": "Data", "number": "113"}, {
+                    "name": "Gaogamon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "114"
+                }, {
+                    "name": "Gawappamon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "115"
+                }, {"name": "Kiwimon", "stage": "Champion", "attribute": "Data", "number": "116"}, {
+                    "name": "Kyubimon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "117"
+                }, {
+                    "name": "Clockmon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "118"
+                }, {
+                    "name": "Centalmon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "119"
+                }, {
+                    "name": "Sunflowmon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "120"
+                }, {
+                    "name": "Seadramon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "121"
+                }, {"name": "Coelamon", "stage": "Champion", "attribute": "Data", "number": "122"}, {
+                    "name": "Shellmon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "123"
+                }, {"name": "Starmon", "stage": "Champion", "attribute": "Data", "number": "124"}, {
+                    "name": "Tankmon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "125"
+                }, {
+                    "name": "Tuchidarumon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "126"
+                }, {
+                    "name": "Dinohumon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "127"
+                }, {
+                    "name": "Tyranomon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "128"
+                }, {"name": "Turuiemon", "stage": "Champion", "attribute": "Data", "number": "129"}, {
+                    "name": "Togemon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "130"
+                }, {
+                    "name": "Drimogemon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "131"
+                }, {
+                    "name": "Dorugamon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "132"
+                }, {
+                    "name": "Bao Hackmon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "133"
+                }, {"name": "Blimpmon", "stage": "Champion", "attribute": "Data", "number": "134"}, {
+                    "name": "Meramon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "135"
+                }, {
+                    "name": "Monochromon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "136"
+                }, {
+                    "name": "Lekismon",
+                    "stage": "Champion",
+                    "attribute": "Data",
+                    "number": "137"
+                }, {
+                    "name": "Ice Devimon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "138"
+                }, {"name": "Wendimon", "stage": "Champion", "attribute": "Virus", "number": "139"}, {
+                    "name": "Woodmon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "140"
+                }, {"name": "Orgemon", "stage": "Champion", "attribute": "Virus", "number": "141"}, {
+                    "name": "Octmon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "142"
+                }, {
+                    "name": "Guardromon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "143"
+                }, {
+                    "name": "Karatuki Numemon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "144"
+                }, {
+                    "name": "Growmon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "145"
+                }, {
+                    "name": "Kuwagamon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "146"
+                }, {"name": "Gekomon", "stage": "Champion", "attribute": "Virus", "number": "147"}, {
+                    "name": "Geremon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "148"
+                }, {
+                    "name": "Coredramon (Green)",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "149"
+                }, {
+                    "name": "Gold Numemon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "150"
+                }, {"name": "Golemon", "stage": "Champion", "attribute": "Virus", "number": "151"}, {
+                    "name": "Cyclomon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "152"
+                }, {
+                    "name": "Sangloupmon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "153"
+                }, {"name": "Scumon", "stage": "Champion", "attribute": "Virus", "number": "154"}, {
+                    "name": "Tuskmon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "155"
+                }, {"name": "Devimon", "stage": "Champion", "attribute": "Virus", "number": "156"}, {
+                    "name": "Deltamon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "157"
+                }, {
+                    "name": "Dokugumon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "158"
+                }, {"name": "Nanimon", "stage": "Champion", "attribute": "Virus", "number": "159"}, {
+                    "name": "Numemon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "160"
+                }, {
+                    "name": "Bakemon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "161"
+                }, {
+                    "name": "Hyougamon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "162"
+                }, {"name": "Fugamon", "stage": "Champion", "attribute": "Virus", "number": "163"}, {
+                    "name": "Flymon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "164"
+                }, {
+                    "name": "Platinum Scumon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "165"
+                }, {
+                    "name": "Black Tailmon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "166"
+                }, {
+                    "name": "Vegimon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "167"
+                }, {
+                    "name": "Minotaurmon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "168"
+                }, {
+                    "name": "Musyamon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "169"
+                }, {
+                    "name": "Mechanorimon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "170"
+                }, {"name": "Raremon", "stage": "Champion", "attribute": "Virus", "number": "171"}, {
+                    "name": "Waspmon",
+                    "stage": "Champion",
+                    "attribute": "Virus",
+                    "number": "172"
+                }, {
+                    "name": "Aquilamon",
+                    "stage": "Champion",
+                    "attribute": "Free",
+                    "number": "173"
+                }, {"name": "Ankylomon", "stage": "Champion", "attribute": "Free", "number": "174"}, {
+                    "name": "Xv-Mon",
+                    "stage": "Champion",
+                    "attribute": "Free",
+                    "number": "175"
+                }, {
+                    "name": "Guardromon (Gold)",
+                    "stage": "Champion",
+                    "attribute": "Free",
+                    "number": "176"
+                }, {
+                    "name": "Stingmon",
+                    "stage": "Champion",
+                    "attribute": "Free",
+                    "number": "177"
+                }, {
+                    "name": "Chrysalimon",
+                    "stage": "Champion",
+                    "attribute": "Unknown",
+                    "number": "178"
+                }, {"name": "Submarimon", "stage": "Armor", "attribute": "Free", "number": "179"}, {
+                    "name": "Shurimon",
+                    "stage": "Armor",
+                    "attribute": "Free",
+                    "number": "180"
+                }, {"name": "Digmon", "stage": "Armor", "attribute": "Free", "number": "181"}, {
+                    "name": "Nefertimon",
+                    "stage": "Armor",
+                    "attribute": "Free",
+                    "number": "182"
+                }, {"name": "Fladramon", "stage": "Armor", "attribute": "Free", "number": "183"}, {
+                    "name": "Pegasmon",
+                    "stage": "Armor",
+                    "attribute": "Free",
+                    "number": "184"
+                }, {"name": "Holsmon", "stage": "Armor", "attribute": "Free", "number": "185"}, {
+                    "name": "Lighdramon",
+                    "stage": "Armor",
+                    "attribute": "Free",
+                    "number": "186"
+                }, {
+                    "name": "Agnimon",
+                    "stage": "Human Hybrid",
+                    "attribute": "Variable",
+                    "number": "187"
+                }, {
+                    "name": "Wolfmon",
+                    "stage": "Human Hybrid",
+                    "attribute": "Variable",
+                    "number": "188"
+                }, {
+                    "name": "Ranamon",
+                    "stage": "Human Hybrid",
+                    "attribute": "Variable",
+                    "number": "189"
+                }, {
+                    "name": "Vritramon",
+                    "stage": "Beast Hybrid",
+                    "attribute": "Variable",
+                    "number": "190"
+                }, {
+                    "name": "Calamaramon",
+                    "stage": "Beast Hybrid",
+                    "attribute": "Variable",
+                    "number": "191"
+                }, {
+                    "name": "Garummon",
+                    "stage": "Beast Hybrid",
+                    "attribute": "Variable",
+                    "number": "192"
+                }, {
+                    "name": "Aegiochusmon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "193"
+                }, {
+                    "name": "Aegiochusmon: Green",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "194"
+                }, {
+                    "name": "Aegiochusmon: Dark",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "195"
+                }, {
+                    "name": "Aegiochusmon: Blue",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "196"
+                }, {
+                    "name": "Aegiochusmon: Holy",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "197"
+                }, {
+                    "name": "Atlur Kabuterimon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "198"
+                }, {
+                    "name": "Andromon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "199"
+                }, {
+                    "name": "Wingdramon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "200"
+                }, {
+                    "name": "Aero V-Dramon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "201"
+                }, {
+                    "name": "Ex-Tyranomon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "202"
+                }, {
+                    "name": "Angewomon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "203"
+                }, {
+                    "name": "Garudamon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "204"
+                }, {
+                    "name": "Grappu Leomon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "205"
+                }, {
+                    "name": "Grademon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "206"
+                }, {
+                    "name": "Great Gryzmon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "207"
+                }, {
+                    "name": "Cerberumon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "208"
+                }, {
+                    "name": "Cerberumon: Werewolf Mode",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "209"
+                }, {
+                    "name": "Cyberdramon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "210"
+                }, {
+                    "name": "Jewelbeemon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "211"
+                }, {
+                    "name": "Zudomon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "212"
+                }, {
+                    "name": "Tyilinmon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "213"
+                }, {
+                    "name": "Duramon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "214"
+                }, {
+                    "name": "Parrotmon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "215"
+                }, {
+                    "name": "Panjyamon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "216"
+                }, {
+                    "name": "Hisyaryumon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "217"
+                }, {
+                    "name": "Butenmon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "218"
+                }, {
+                    "name": "Flaremon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "219"
+                }, {
+                    "name": "Whamon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "220"
+                }, {
+                    "name": "Holy Angemon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "221"
+                }, {
+                    "name": "Mammon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "222"
+                }, {
+                    "name": "Metal Greymon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "223"
+                }, {
+                    "name": "Monzaemon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "224"
+                }, {
+                    "name": "Yatagaramon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "225"
+                }, {
+                    "name": "Rize Greymon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "226"
+                }, {
+                    "name": "Rapidmon Perfect",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "227"
+                }, {
+                    "name": "Loader Leomon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "228"
+                }, {
+                    "name": "Were Garurumon",
+                    "stage": "Ultimate",
+                    "attribute": "Vaccine",
+                    "number": "229"
+                }, {
+                    "name": "Anomalocarimon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "230"
+                }, {
+                    "name": "Enbarrmon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "231"
+                }, {
+                    "name": "Andiramon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "232"
+                }, {
+                    "name": "Insekimon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "233"
+                }, {
+                    "name": "Omega Shoutmon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "234"
+                }, {
+                    "name": "Chimairamon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "235"
+                }, {
+                    "name": "Catch Mamemon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "236"
+                }, {
+                    "name": "Crescemon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "237"
+                }, {
+                    "name": "Super Starmon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "238"
+                }, {
+                    "name": "Skull Baluchimon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "239"
+                }, {
+                    "name": "Savior Hackmon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "240"
+                }, {"name": "Sirenmon", "stage": "Ultimate", "attribute": "Data", "number": "241"}, {
+                    "name": "Taomon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "242"
+                }, {
+                    "name": "Digitamamon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "243"
+                }, {
+                    "name": "Death Meramon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "244"
+                }, {
+                    "name": "Delumon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "245"
+                }, {
+                    "name": "Triceramon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "246"
+                }, {
+                    "name": "Doruguremon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "247"
+                }, {
+                    "name": "Knightmon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "248"
+                }, {
+                    "name": "Hangyomon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "249"
+                }, {"name": "Pandamon", "stage": "Ultimate", "attribute": "Data", "number": "250"}, {
+                    "name": "Pumpmon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "251"
+                }, {
+                    "name": "Big Mamemon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "252"
+                }, {
+                    "name": "Piccolomon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "253"
+                }, {
+                    "name": "Hippogriffomon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "254"
+                }, {
+                    "name": "Brachiomon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "255"
+                }, {
+                    "name": "Volcamon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "256"
+                }, {
+                    "name": "Master Blimpmon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "257"
+                }, {
+                    "name": "Mach Gaogamon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "258"
+                }, {
+                    "name": "Mamemon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "259"
+                }, {
+                    "name": "Mega Seadramon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "260"
+                }, {
+                    "name": "Metal Mamemon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "261"
+                }, {"name": "Lilamon", "stage": "Ultimate", "attribute": "Data", "number": "262"}, {
+                    "name": "Lilimon",
+                    "stage": "Ultimate",
+                    "attribute": "Data",
+                    "number": "263"
+                }, {"name": "Locomon", "stage": "Ultimate", "attribute": "Data", "number": "264"}, {
+                    "name": "Astamon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "265"
+                }, {
+                    "name": "Archnemon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "266"
+                }, {"name": "Vamdemon", "stage": "Ultimate", "attribute": "Virus", "number": "267"}, {
+                    "name": "Etemon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "268"
+                }, {
+                    "name": "Okuwamon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "269"
+                }, {
+                    "name": "Orochimon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "270"
+                }, {
+                    "name": "Gerbemon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "271"
+                }, {
+                    "name": "Gigadramon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "272"
+                }, {
+                    "name": "Cannonbeemon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "273"
+                }, {
+                    "name": "Groundramon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "274"
+                }, {
+                    "name": "Sharkmon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "275"
+                }, {
+                    "name": "Shawujinmon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "276"
+                }, {
+                    "name": "Jyureimon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "277"
+                }, {
+                    "name": "Skull Greymon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "278"
+                }, {
+                    "name": "Skull Satamon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "279"
+                }, {
+                    "name": "Skullseadramon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "280"
+                }, {
+                    "name": "Dark Super Starmon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "281"
+                }, {
+                    "name": "Dagomon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "282"
+                }, {
+                    "name": "Tankdramon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "283"
+                }, {
+                    "name": "Tonosama Gekomon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "284"
+                }, {"name": "Nanomon", "stage": "Ultimate", "attribute": "Virus", "number": "285"}, {
+                    "name": "Fantomon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "286"
+                }, {
+                    "name": "Black King Numemon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "287"
+                }, {
+                    "name": "Blue Meramon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "288"
+                }, {
+                    "name": "Vademon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "289"
+                }, {
+                    "name": "Matadrmon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "290"
+                }, {
+                    "name": "Mummymon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "291"
+                }, {
+                    "name": "Mistymon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "292"
+                }, {
+                    "name": "Megadramon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "293"
+                }, {
+                    "name": "Megalo Growmon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "294"
+                }, {
+                    "name": "Metal Tyranomon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "295"
+                }, {
+                    "name": "Lucemon: Falldown Mode",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "296"
+                }, {
+                    "name": "Lady Devimon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "297"
+                }, {
+                    "name": "Wisemon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "298"
+                }, {
+                    "name": "Waru Seadramon",
+                    "stage": "Ultimate",
+                    "attribute": "Virus",
+                    "number": "299"
+                }, {
+                    "name": "Shakkoumon",
+                    "stage": "Ultimate",
+                    "attribute": "Free",
+                    "number": "300"
+                }, {
+                    "name": "Silphymon",
+                    "stage": "Ultimate",
+                    "attribute": "Free",
+                    "number": "301"
+                }, {
+                    "name": "Dinobeemon",
+                    "stage": "Ultimate",
+                    "attribute": "Free",
+                    "number": "302"
+                }, {
+                    "name": "Paildramon",
+                    "stage": "Ultimate",
+                    "attribute": "Free",
+                    "number": "303"
+                }, {
+                    "name": "Infermon",
+                    "stage": "Ultimate",
+                    "attribute": "Unknown",
+                    "number": "304"
+                }, {
+                    "name": "Aldamon",
+                    "stage": "Fusion Hybrid",
+                    "attribute": "Variable",
+                    "number": "305"
+                }, {
+                    "name": "Beowolfmon",
+                    "stage": "Fusion Hybrid",
+                    "attribute": "Variable",
+                    "number": "306"
+                }, {"name": "Apollomon", "stage": "Mega", "attribute": "Vaccine", "number": "307"}, {
+                    "name": "Alphamon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "308"
+                }, {
+                    "name": "Ulforce V-Dramon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "309"
+                }, {"name": "Valdurmon", "stage": "Mega", "attribute": "Vaccine", "number": "310"}, {
+                    "name": "Venusmon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "311"
+                }, {
+                    "name": "War Greymon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "312"
+                }, {"name": "Ouryumon", "stage": "Mega", "attribute": "Vaccine", "number": "313"}, {
+                    "name": "Ofanimon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "314"
+                }, {
+                    "name": "Clavis Angemon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "315"
+                }, {
+                    "name": "Craniummon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "316"
+                }, {"name": "Crossmon", "stage": "Mega", "attribute": "Vaccine", "number": "317"}, {
+                    "name": "Chronomon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "318"
+                }, {
+                    "name": "Cherubimon (Vice)",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "319"
+                }, {
+                    "name": "Cherubimon (Virtue)",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "320"
+                }, {
+                    "name": "Goddramon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "321"
+                }, {
+                    "name": "Shine Greymon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "322"
+                }, {
+                    "name": "Justimon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "323"
+                }, {
+                    "name": "Skull Mammon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "324"
+                }, {
+                    "name": "Slash Angemon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "325"
+                }, {
+                    "name": "Sleipmon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "326"
+                }, {
+                    "name": "Slayerdramon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "327"
+                }, {
+                    "name": "Seraphimon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "328"
+                }, {
+                    "name": "Saint Galgomon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "329"
+                }, {
+                    "name": "Durandamon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "330"
+                }, {
+                    "name": "Neptunemon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "331"
+                }, {
+                    "name": "Hi Andromon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "332"
+                }, {
+                    "name": "Bancho Leomon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "333"
+                }, {
+                    "name": "Herakle Kabuterimon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "334"
+                }, {
+                    "name": "Hououmon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "335"
+                }, {
+                    "name": "Holydramon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "336"
+                }, {
+                    "name": "Mastemon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "337"
+                }, {
+                    "name": "Marin Angemon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "338"
+                }, {"name": "Marsmon", "stage": "Mega", "attribute": "Vaccine", "number": "339"}, {
+                    "name": "Jupitermon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "340"
+                }, {
+                    "name": "Ravmon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "341"
+                }, {
+                    "name": "Ultimate Brachiomon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "342"
+                }, {"name": "Vulcanusmon", "stage": "Mega", "attribute": "Data", "number": "343"}, {
+                    "name": "Gankoomon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "344"
+                }, {
+                    "name": "Kuzuhamon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "345"
+                }, {
+                    "name": "Grand Locomon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "346"
+                }, {"name": "Griffomon", "stage": "Mega", "attribute": "Data", "number": "347"}, {
+                    "name": "Ceresmon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "348"
+                }, {
+                    "name": "Ceresmon Medium",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "349"
+                }, {
+                    "name": "Saber Leomon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "350"
+                }, {"name": "Sakuyamon", "stage": "Mega", "attribute": "Data", "number": "351"}, {
+                    "name": "Jesmon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "352"
+                }, {
+                    "name": "Jumbo Gamemon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "353"
+                }, {"name": "Dianamon", "stage": "Mega", "attribute": "Data", "number": "354"}, {
+                    "name": "Dynasmon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "355"
+                }, {
+                    "name": "Duftmon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "356"
+                }, {
+                    "name": "Duftmon: Leopard Mode",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "357"
+                }, {
+                    "name": "Dorugoramon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "358"
+                }, {
+                    "name": "Pile Volcamon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "359"
+                }, {
+                    "name": "Prince Mamemon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "360"
+                }, {"name": "Plesiomon", "stage": "Mega", "attribute": "Data", "number": "361"}, {
+                    "name": "Boltmon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "362"
+                }, {
+                    "name": "Mirage Gaogamon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "363"
+                }, {
+                    "name": "Metal Garurumon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "364"
+                }, {
+                    "name": "Metal Seadramon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "365"
+                }, {
+                    "name": "Medieval Dukemon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "366"
+                }, {"name": "Rosemon", "stage": "Mega", "attribute": "Data", "number": "367"}, {
+                    "name": "Lotusmon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "368"
+                }, {"name": "Avenge Kidmon", "stage": "Mega", "attribute": "Virus", "number": "369"}, {
+                    "name": "Ebemon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "370"
+                }, {
+                    "name": "Venom Vamdemon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "371"
+                }, {
+                    "name": "Ancient Wisemon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "372"
+                }, {
+                    "name": "Gaioumon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "373"
+                }, {
+                    "name": "Chaos Dukemon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "374"
+                }, {
+                    "name": "Chaosdramon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "375"
+                }, {"name": "Callismon", "stage": "Mega", "attribute": "Virus", "number": "376"}, {
+                    "name": "Gundramon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "377"
+                }, {
+                    "name": "King Etemon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "378"
+                }, {
+                    "name": "Grand Dracumon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "379"
+                }, {
+                    "name": "Chronomon Destroy",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "380"
+                }, {
+                    "name": "Zanbamon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "381"
+                }, {
+                    "name": "Undead Plutomon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "382"
+                }, {
+                    "name": "Darkdramon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "383"
+                }, {
+                    "name": "Tiger Vespamon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "384"
+                }, {
+                    "name": "Titamon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "385"
+                }, {
+                    "name": "Tyrant Kabuterimon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "386"
+                }, {"name": "Demon", "stage": "Mega", "attribute": "Virus", "number": "387"}, {
+                    "name": "Dukemon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "388"
+                }, {
+                    "name": "Bacchusmon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "389"
+                }, {
+                    "name": "Bacchusmon Drunk",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "390"
+                }, {"name": "Barbamon", "stage": "Mega", "attribute": "Virus", "number": "391"}, {
+                    "name": "Piemon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "392"
+                }, {
+                    "name": "Pinochimon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "393"
+                }, {"name": "Pharaohmon", "stage": "Mega", "attribute": "Virus", "number": "394"}, {
+                    "name": "Pukumon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "395"
+                }, {
+                    "name": "Platinum Numemon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "396"
+                }, {"name": "Plutomon", "stage": "Mega", "attribute": "Virus", "number": "397"}, {
+                    "name": "Breakdramon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "398"
+                }, {
+                    "name": "Belial Vamdemon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "399"
+                }, {
+                    "name": "Beel Starmon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "400"
+                }, {
+                    "name": "Beelzebumon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "401"
+                }, {
+                    "name": "Belphemon: Sleep Mode",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "402"
+                }, {
+                    "name": "Magna Kidmon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "403"
+                }, {
+                    "name": "Minervamon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "404"
+                }, {
+                    "name": "Millenniumon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "405"
+                }, {
+                    "name": "Mugendramon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "406"
+                }, {
+                    "name": "Megidramon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "407"
+                }, {
+                    "name": "Metal Etemon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "408"
+                }, {"name": "Mercurymon", "stage": "Mega", "attribute": "Virus", "number": "409"}, {
+                    "name": "Junomon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "410"
+                }, {
+                    "name": "Junomon: Hysteric Mode",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "411"
+                }, {
+                    "name": "Rust Tyranomon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "412"
+                }, {"name": "Leviamon", "stage": "Mega", "attribute": "Virus", "number": "413"}, {
+                    "name": "Lilithmon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "414"
+                }, {
+                    "name": "Lord Knightmon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "415"
+                }, {
+                    "name": "Imperialdramon: Dragon Mode",
+                    "stage": "Mega",
+                    "attribute": "Free",
+                    "number": "416"
+                }, {
+                    "name": "Imperialdramon: Fighter Mode",
+                    "stage": "Mega",
+                    "attribute": "Free",
+                    "number": "417"
+                }, {"name": "Vikemon", "stage": "Mega", "attribute": "Free", "number": "418"}, {
+                    "name": "Valkyrimon",
+                    "stage": "Mega",
+                    "attribute": "Free",
+                    "number": "419"
+                }, {
+                    "name": "Gran Kuwagamon",
+                    "stage": "Mega",
+                    "attribute": "Free",
+                    "number": "420"
+                }, {
+                    "name": "Diablomon",
+                    "stage": "Mega",
+                    "attribute": "Unknown",
+                    "number": "421"
+                }, {
+                    "name": "Rapidmon Armor",
+                    "stage": "Golden Armor",
+                    "attribute": "Vaccine",
+                    "number": "422"
+                }, {
+                    "name": "Magnamon",
+                    "stage": "Golden Armor",
+                    "attribute": "Free",
+                    "number": "423"
+                }, {
+                    "name": "Kaiser Greymon",
+                    "stage": "Transcendent Hybrid",
+                    "attribute": "Variable",
+                    "number": "424"
+                }, {
+                    "name": "Magna Garurumon",
+                    "stage": "Transcendent Hybrid",
+                    "attribute": "Variable",
+                    "number": "425"
+                }, {
+                    "name": "Magna Garurumon: Separation",
+                    "stage": "Transcendent Hybrid",
+                    "attribute": "Variable",
+                    "number": "426"
+                }, {
+                    "name": "Alphamon: Ouryuken",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "427"
+                }, {
+                    "name": "Enbarrmon Craniummon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "428"
+                }, {
+                    "name": "Imperialdramon: Paladin Mode",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "429"
+                }, {
+                    "name": "Omegamon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "430"
+                }, {
+                    "name": "Omegamon Zwart",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "431"
+                }, {
+                    "name": "Chaosmon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "432"
+                }, {
+                    "name": "Chaosmon: Valdur Arm",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "433"
+                }, {
+                    "name": "Grace Novamon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "434"
+                }, {
+                    "name": "Shine Greymon: Burst Mode",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "435"
+                }, {
+                    "name": "Susanoomon",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "436"
+                }, {
+                    "name": "Jupitermon: Wrath Mode",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "437"
+                }, {
+                    "name": "Ravmon: Burst Mode",
+                    "stage": "Mega",
+                    "attribute": "Vaccine",
+                    "number": "438"
+                }, {
+                    "name": "Examon",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "439"
+                }, {
+                    "name": "Mirage Gaogamon: Burst Mode",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "440"
+                }, {
+                    "name": "Rosemon: Burst Mode",
+                    "stage": "Mega",
+                    "attribute": "Data",
+                    "number": "441"
+                }, {
+                    "name": "Skull Baluchimon Titamon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "442"
+                }, {
+                    "name": "Dukemon: Crimson Mode",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "443"
+                }, {
+                    "name": "Beelzebumon: Blast Mode",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "444"
+                }, {
+                    "name": "Belphemon: Rage Mode",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "445"
+                }, {
+                    "name": "Mervamon",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "446"
+                }, {
+                    "name": "Lucemon: Satan Mode",
+                    "stage": "Mega",
+                    "attribute": "Virus",
+                    "number": "447"
+                }, {
+                    "name": "Armagemon",
+                    "stage": "Mega",
+                    "attribute": "Unknown",
+                    "number": "448"
+                }, {
+                    "name": "Agumon -Yuki No Kizuna-",
+                    "stage": "Mega",
+                    "attribute": "Unknown",
+                    "number": "449"
+                }, {
+                    "name": "Apocalymon",
+                    "stage": "Mega",
+                    "attribute": "Unknown",
+                    "number": "450"
+                }, {"name": "Gabumon -Yujo No Kizuna-", "stage": "Mega", "attribute": "Unknown", "number": "451"}],
+                "evolutions": [{"from": "Kuramon", "to": "Pagumon"}, {
+                    "from": "Kuramon",
+                    "to": "Tsumemon"
+                }, {"from": "Choromon", "to": "Caprimon"}, {"from": "Dodomon", "to": "Wanyamon"}, {
+                    "from": "Dodomon",
+                    "to": "Dorimon"
+                }, {"from": "Bubbmon", "to": "Mochimon"}, {"from": "Bubbmon", "to": "Pyocomon"}, {
+                    "from": "Bubbmon",
+                    "to": "Tanemon"
+                }, {"from": "Punimon", "to": "Tunomon"}, {"from": "Punimon", "to": "Nyaromon"}, {
+                    "from": "Botamon",
+                    "to": "Koromon"
+                }, {"from": "Poyomon", "to": "Pukamon"}, {"from": "Poyomon", "to": "Tokomon"}, {
+                    "from": "Caprimon",
+                    "to": "Hagurumon"
+                }, {"from": "Caprimon", "to": "Kokuwamon"}, {
+                    "from": "Caprimon",
+                    "to": "Toy Agumon"
+                }, {"from": "Caprimon", "to": "Solarmon"}, {"from": "Koromon", "to": "Agumon"}, {
+                    "from": "Koromon",
+                    "to": "Guilmon"
+                }, {"from": "Koromon", "to": "Dracomon"}, {"from": "Koromon", "to": "Kotemon"}, {
+                    "from": "Koromon",
+                    "to": "Betamon"
+                }, {"from": "Koromon", "to": "Shoutmon"}, {"from": "Tanemon", "to": "Funbeemon"}, {
+                    "from": "Tanemon",
+                    "to": "Lalamon"
+                }, {"from": "Tanemon", "to": "Palmon"}, {"from": "Tanemon", "to": "Mushmon"}, {
+                    "from": "Tanemon",
+                    "to": "Floramon"
+                }, {"from": "Tunomon", "to": "Goburimon"}, {"from": "Tunomon", "to": "V-Mon"}, {
+                    "from": "Tunomon",
+                    "to": "Gabumon"
+                }, {"from": "Tunomon", "to": "Ryudamon"}, {"from": "Tunomon", "to": "Elecmon"}, {
+                    "from": "Tunomon",
+                    "to": "Zubamon"
+                }, {"from": "Tsumemon", "to": "Dracumon"}, {"from": "Tsumemon", "to": "Shamamon"}, {
+                    "from": "Tsumemon",
+                    "to": "Keramon"
+                }, {"from": "Tokomon", "to": "Patamon"}, {"from": "Tokomon", "to": "Coronamon"}, {
+                    "from": "Tokomon",
+                    "to": "Terriermon"
+                }, {"from": "Tokomon", "to": "Armadimon"}, {"from": "Tokomon", "to": "Lucemon"}, {
+                    "from": "Dorimon",
+                    "to": "Dorumon"
+                }, {"from": "Dorimon", "to": "Monodramon"}, {
+                    "from": "Dorimon",
+                    "to": "Snow Goburimon"
+                }, {"from": "Dorimon", "to": "Lopmon"}, {"from": "Nyaromon", "to": "Lunamon"}, {
+                    "from": "Nyaromon",
+                    "to": "Kudamon"
+                }, {"from": "Nyaromon", "to": "Plotmon"}, {"from": "Nyaromon", "to": "Hackmon"}, {
+                    "from": "Pagumon",
+                    "to": "Impmon"
+                }, {"from": "Pagumon", "to": "Pico Devimon"}, {"from": "Pagumon", "to": "Gazimon"}, {
+                    "from": "Pagumon",
+                    "to": "Otamamon"
+                }, {"from": "Pyocomon", "to": "Piyomon"}, {"from": "Pyocomon", "to": "Penmon"}, {
+                    "from": "Pyocomon",
+                    "to": "Falcomon"
+                }, {"from": "Pyocomon", "to": "Hawkmon"}, {"from": "Pyocomon", "to": "Hyokomon"}, {
+                    "from": "Pyocomon",
+                    "to": "Muchomon"
+                }, {"from": "Pukamon", "to": "Kamemon"}, {"from": "Pukamon", "to": "Ganimon"}, {
+                    "from": "Pukamon",
+                    "to": "Gomamon"
+                }, {"from": "Pukamon", "to": "Gizamon"}, {"from": "Pukamon", "to": "Shakomon"}, {
+                    "from": "Mochimon",
+                    "to": "Tyumon"
+                }, {"from": "Mochimon", "to": "Tentomon"}, {"from": "Mochimon", "to": "Wormmon"}, {
+                    "from": "Mochimon",
+                    "to": "Gottsumon"
+                }, {"from": "Wanyamon", "to": "Gaomon"}, {"from": "Wanyamon", "to": "Bakumon"}, {
+                    "from": "Wanyamon",
+                    "to": "Bearmon"
+                }, {"from": "Wanyamon", "to": "Renamon"}, {"from": "Agumon", "to": "Raptordramon"}, {
+                    "from": "Agumon",
+                    "to": "Geo Greymon"
+                }, {"from": "Agumon", "to": "Numemon"}, {"from": "Agumon", "to": "Greymon"}, {
+                    "from": "Agumon",
+                    "to": "Coredramon (Green)"
+                }, {"from": "Agumon", "to": "Agumon -Yuki No Kizuna-"}, {
+                    "from": "Kudamon",
+                    "to": "Airdramon"
+                }, {"from": "Kudamon", "to": "Reppamon"}, {"from": "Kudamon", "to": "Angemon"}, {
+                    "from": "Kudamon",
+                    "to": "Ginryumon"
+                }, {"from": "Kudamon", "to": "Wolfmon"}, {"from": "Kudamon", "to": "Sorcerimon"}, {
+                    "from": "Gomamon",
+                    "to": "Mojyamon"
+                }, {"from": "Gomamon", "to": "Ikkakumon"}, {"from": "Gomamon", "to": "Yukidarumon"}, {
+                    "from": "Gomamon",
+                    "to": "Hyougamon"
+                }, {"from": "Gomamon", "to": "Ice Devimon"}, {
+                    "from": "Coronamon",
+                    "to": "Firamon"
+                }, {"from": "Coronamon", "to": "Meramon"}, {"from": "Coronamon", "to": "Growmon"}, {
+                    "from": "Coronamon",
+                    "to": "Bao Hackmon"
+                }, {"from": "Coronamon", "to": "Birdramon"}, {"from": "Coronamon", "to": "Agnimon"}, {
+                    "from": "Zubamon",
+                    "to": "Musyamon"
+                }, {"from": "Zubamon", "to": "Buraimon"}, {"from": "Zubamon", "to": "Tankmon"}, {
+                    "from": "Zubamon",
+                    "to": "Zubaeagermon"
+                }, {"from": "Zubamon", "to": "Ankylomon"}, {
+                    "from": "Zubamon",
+                    "to": "Guardromon (Gold)"
+                }, {"from": "Solarmon", "to": "Starmon"}, {
+                    "from": "Solarmon",
+                    "to": "Gold Numemon"
+                }, {"from": "Solarmon", "to": "Meramon"}, {
+                    "from": "Solarmon",
+                    "to": "Guardromon (Gold)"
+                }, {"from": "Terriermon", "to": "Mojyamon"}, {
+                    "from": "Terriermon",
+                    "to": "Lekismon"
+                }, {"from": "Terriermon", "to": "Gawappamon"}, {
+                    "from": "Terriermon",
+                    "to": "Gargomon"
+                }, {"from": "Terriermon", "to": "Rapidmon Armor"}, {
+                    "from": "Tentomon",
+                    "to": "Kabuterimon"
+                }, {"from": "Tentomon", "to": "Sunflowmon"}, {
+                    "from": "Tentomon",
+                    "to": "Kuwagamon"
+                }, {"from": "Tentomon", "to": "Waspmon"}, {"from": "Tentomon", "to": "Snimon"}, {
+                    "from": "Toy Agumon",
+                    "to": "Blimpmon"
+                }, {"from": "Toy Agumon", "to": "Revolmon"}, {
+                    "from": "Toy Agumon",
+                    "to": "Raremon"
+                }, {"from": "Toy Agumon", "to": "Tankmon"}, {
+                    "from": "Toy Agumon",
+                    "to": "Gargomon"
+                }, {"from": "Bakumon", "to": "Meramon"}, {"from": "Bakumon", "to": "Garurumon"}, {
+                    "from": "Bakumon",
+                    "to": "Bakemon"
+                }, {"from": "Bakumon", "to": "Unimon"}, {"from": "Bakumon", "to": "Kyubimon"}, {
+                    "from": "Hyokomon",
+                    "to": "Peckmon"
+                }, {"from": "Hyokomon", "to": "Birdramon"}, {
+                    "from": "Hyokomon",
+                    "to": "Dinohumon"
+                }, {"from": "Hyokomon", "to": "Buraimon"}, {"from": "Piyomon", "to": "Aquilamon"}, {
+                    "from": "Piyomon",
+                    "to": "Birdramon"
+                }, {"from": "Piyomon", "to": "Unimon"}, {"from": "Piyomon", "to": "Wizarmon"}, {
+                    "from": "Falcomon",
+                    "to": "Peckmon"
+                }, {"from": "Falcomon", "to": "Ginryumon"}, {"from": "Falcomon", "to": "Kiwimon"}, {
+                    "from": "Plotmon",
+                    "to": "Tailmon"
+                }, {"from": "Plotmon", "to": "Sangloupmon"}, {"from": "Plotmon", "to": "Dobermon"}, {
+                    "from": "Plotmon",
+                    "to": "Ikkakumon"
+                }, {"from": "Plotmon", "to": "V-Dramon"}, {"from": "Plotmon", "to": "Drimogemon"}, {
+                    "from": "Bearmon",
+                    "to": "Gryzmon"
+                }, {"from": "Bearmon", "to": "Gaogamon"}, {"from": "Bearmon", "to": "Mojyamon"}, {
+                    "from": "Bearmon",
+                    "to": "Leomon"
+                }, {"from": "Penmon", "to": "Peckmon"}, {"from": "Penmon", "to": "Buraimon"}, {
+                    "from": "Penmon",
+                    "to": "Kiwimon"
+                }, {"from": "Penmon", "to": "Aquilamon"}, {
+                    "from": "Monodramon",
+                    "to": "Strikedramon"
+                }, {"from": "Monodramon", "to": "Raptordramon"}, {
+                    "from": "Monodramon",
+                    "to": "Deltamon"
+                }, {"from": "Monodramon", "to": "Chrysalimon"}, {
+                    "from": "Monodramon",
+                    "to": "Cyclomon"
+                }, {"from": "Ryudamon", "to": "Reppamon"}, {"from": "Ryudamon", "to": "Coelamon"}, {
+                    "from": "Ryudamon",
+                    "to": "Ginryumon"
+                }, {"from": "Ryudamon", "to": "Greymon"}, {"from": "Ryudamon", "to": "Monochromon"}, {
+                    "from": "Lucemon",
+                    "to": "Lucemon: Falldown Mode"
+                }, {"from": "Elecmon", "to": "Aegiomon"}, {"from": "Elecmon", "to": "Seadramon"}, {
+                    "from": "Elecmon",
+                    "to": "Unimon"
+                }, {"from": "Elecmon", "to": "Kuwagamon"}, {"from": "Elecmon", "to": "Gekomon"}, {
+                    "from": "Gaomon",
+                    "to": "Strikedramon"
+                }, {"from": "Gaomon", "to": "Gaogamon"}, {"from": "Gaomon", "to": "Leomon"}, {
+                    "from": "Gaomon",
+                    "to": "Nanimon"
+                }, {"from": "Gaomon", "to": "Turuiemon"}, {"from": "Ganimon", "to": "Gawappamon"}, {
+                    "from": "Ganimon",
+                    "to": "Octmon"
+                }, {"from": "Ganimon", "to": "Shellmon"}, {"from": "Ganimon", "to": "Raremon"}, {
+                    "from": "Ganimon",
+                    "to": "Snimon"
+                }, {"from": "Ganimon", "to": "Coelamon"}, {"from": "Gabumon", "to": "Garurumon"}, {
+                    "from": "Gabumon",
+                    "to": "Ikkakumon"
+                }, {"from": "Gabumon", "to": "Drimogemon"}, {"from": "Gabumon", "to": "Kyubimon"}, {
+                    "from": "Gabumon",
+                    "to": "Geremon"
+                }, {"from": "Gabumon", "to": "Gabumon -Yujo No Kizuna-"}, {
+                    "from": "Kamemon",
+                    "to": "Gawappamon"
+                }, {"from": "Kamemon", "to": "Octmon"}, {"from": "Kamemon", "to": "Shellmon"}, {
+                    "from": "Kamemon",
+                    "to": "Karatuki Numemon"
+                }, {"from": "Kamemon", "to": "Dinohumon"}, {
+                    "from": "Kamemon",
+                    "to": "Sorcerimon"
+                }, {"from": "Kokuwamon", "to": "Centalmon"}, {
+                    "from": "Kokuwamon",
+                    "to": "Kuwagamon"
+                }, {"from": "Kokuwamon", "to": "Clockmon"}, {
+                    "from": "Kokuwamon",
+                    "to": "Waspmon"
+                }, {"from": "Kokuwamon", "to": "Mechanorimon"}, {
+                    "from": "Gottsumon",
+                    "to": "Starmon"
+                }, {"from": "Gottsumon", "to": "Guardromon"}, {
+                    "from": "Gottsumon",
+                    "to": "Golemon"
+                }, {"from": "Gottsumon", "to": "Monochromon"}, {
+                    "from": "Gottsumon",
+                    "to": "Icemon"
+                }, {"from": "Gottsumon", "to": "Tuchidarumon"}, {
+                    "from": "Kotemon",
+                    "to": "Turuiemon"
+                }, {"from": "Kotemon", "to": "Musyamon"}, {"from": "Kotemon", "to": "Revolmon"}, {
+                    "from": "Kotemon",
+                    "to": "Dinohumon"
+                }, {"from": "Kotemon", "to": "Coredramon (Blue)"}, {
+                    "from": "Shoutmon",
+                    "to": "Omega Shoutmon"
+                }, {"from": "Shoutmon", "to": "Zubaeagermon"}, {
+                    "from": "Shoutmon",
+                    "to": "Gargomon"
+                }, {"from": "Shoutmon", "to": "Guardromon (Gold)"}, {
+                    "from": "Dracomon",
+                    "to": "Coredramon (Green)"
+                }, {"from": "Dracomon", "to": "Coredramon (Blue)"}, {
+                    "from": "Dracomon",
+                    "to": "Deltamon"
+                }, {"from": "Dracomon", "to": "V-Dramon"}, {"from": "Dracomon", "to": "Seadramon"}, {
+                    "from": "Dracomon",
+                    "to": "Tyranomon"
+                }, {"from": "Dorumon", "to": "Raptordramon"}, {
+                    "from": "Dorumon",
+                    "to": "Airdramon"
+                }, {"from": "Dorumon", "to": "Sangloupmon"}, {"from": "Dorumon", "to": "Xv-Mon"}, {
+                    "from": "Dorumon",
+                    "to": "Drimogemon"
+                }, {"from": "Dorumon", "to": "Dorugamon"}, {"from": "Patamon", "to": "Angemon"}, {
+                    "from": "Patamon",
+                    "to": "Pegasmon"
+                }, {"from": "Patamon", "to": "Unimon"}, {"from": "Patamon", "to": "Centalmon"}, {
+                    "from": "Hackmon",
+                    "to": "Tailmon"
+                }, {"from": "Hackmon", "to": "Geo Greymon"}, {"from": "Hackmon", "to": "Growmon"}, {
+                    "from": "Hackmon",
+                    "to": "Bao Hackmon"
+                }, {"from": "Hackmon", "to": "Greymon"}, {"from": "Palmon", "to": "Mojyamon"}, {
+                    "from": "Palmon",
+                    "to": "Vegimon"
+                }, {"from": "Palmon", "to": "Togemon"}, {"from": "Palmon", "to": "Woodmon"}, {
+                    "from": "Palmon",
+                    "to": "Chrysalimon"
+                }, {"from": "Palmon", "to": "Platinum Scumon"}, {
+                    "from": "Floramon",
+                    "to": "Vegimon"
+                }, {"from": "Floramon", "to": "Togemon"}, {"from": "Floramon", "to": "Woodmon"}, {
+                    "from": "Floramon",
+                    "to": "Sunflowmon"
+                }, {"from": "Floramon", "to": "Kiwimon"}, {"from": "Muchomon", "to": "Airdramon"}, {
+                    "from": "Muchomon",
+                    "to": "Peckmon"
+                }, {"from": "Muchomon", "to": "Birdramon"}, {"from": "Muchomon", "to": "Fugamon"}, {
+                    "from": "Lalamon",
+                    "to": "Sunflowmon"
+                }, {"from": "Lalamon", "to": "Togemon"}, {"from": "Lalamon", "to": "Revolmon"}, {
+                    "from": "Lalamon",
+                    "to": "Tuchidarumon"
+                }, {"from": "Lalamon", "to": "Turuiemon"}, {"from": "Lunamon", "to": "Lekismon"}, {
+                    "from": "Lunamon",
+                    "to": "Garurumon"
+                }, {"from": "Lunamon", "to": "Yukidarumon"}, {"from": "Lunamon", "to": "Hyougamon"}, {
+                    "from": "Lunamon",
+                    "to": "Sorcerimon"
+                }, {"from": "Lunamon", "to": "Icemon"}, {"from": "Renamon", "to": "Lekismon"}, {
+                    "from": "Renamon",
+                    "to": "Sunflowmon"
+                }, {"from": "Renamon", "to": "Reppamon"}, {"from": "Renamon", "to": "Kyubimon"}, {
+                    "from": "Lopmon",
+                    "to": "Gryzmon"
+                }, {"from": "Lopmon", "to": "Minotaurmon"}, {"from": "Lopmon", "to": "Leomon"}, {
+                    "from": "Lopmon",
+                    "to": "Turuiemon"
+                }, {"from": "Lopmon", "to": "Wendimon"}, {"from": "Lopmon", "to": "Tuchidarumon"}, {
+                    "from": "Impmon",
+                    "to": "Bakemon"
+                }, {"from": "Impmon", "to": "Wizarmon"}, {"from": "Impmon", "to": "Clockmon"}, {
+                    "from": "Impmon",
+                    "to": "Sangloupmon"
+                }, {"from": "Impmon", "to": "Devimon"}, {"from": "Impmon", "to": "Witchmon"}, {
+                    "from": "Otamamon",
+                    "to": "Seadramon"
+                }, {"from": "Otamamon", "to": "Numemon"}, {"from": "Otamamon", "to": "Gekomon"}, {
+                    "from": "Otamamon",
+                    "to": "Karatuki Numemon"
+                }, {"from": "Otamamon", "to": "Platinum Scumon"}, {
+                    "from": "Gazimon",
+                    "to": "Sangloupmon"
+                }, {"from": "Gazimon", "to": "Black Tailmon"}, {
+                    "from": "Gazimon",
+                    "to": "Gaogamon"
+                }, {"from": "Gazimon", "to": "Bao Hackmon"}, {"from": "Gazimon", "to": "Dobermon"}, {
+                    "from": "Gazimon",
+                    "to": "Dorugamon"
+                }, {"from": "Gizamon", "to": "Cyclomon"}, {"from": "Gizamon", "to": "Flymon"}, {
+                    "from": "Gizamon",
+                    "to": "Zubaeagermon"
+                }, {"from": "Gizamon", "to": "Ankylomon"}, {"from": "Gizamon", "to": "Geremon"}, {
+                    "from": "Gizamon",
+                    "to": "Ranamon"
+                }, {"from": "Guilmon", "to": "Geo Greymon"}, {"from": "Guilmon", "to": "Growmon"}, {
+                    "from": "Guilmon",
+                    "to": "Xv-Mon"
+                }, {"from": "Guilmon", "to": "Tyranomon"}, {"from": "Goburimon", "to": "Golemon"}, {
+                    "from": "Goburimon",
+                    "to": "Wendimon"
+                }, {"from": "Goburimon", "to": "Deltamon"}, {
+                    "from": "Goburimon",
+                    "to": "Tuskmon"
+                }, {"from": "Goburimon", "to": "Orgemon"}, {
+                    "from": "Shamamon",
+                    "to": "Minotaurmon"
+                }, {"from": "Shamamon", "to": "Musyamon"}, {"from": "Shamamon", "to": "Fugamon"}, {
+                    "from": "Shamamon",
+                    "to": "Witchmon"
+                }, {"from": "Shakomon", "to": "Coelamon"}, {"from": "Shakomon", "to": "Shellmon"}, {
+                    "from": "Shakomon",
+                    "to": "Karatuki Numemon"
+                }, {"from": "Shakomon", "to": "Octmon"}, {
+                    "from": "Shakomon",
+                    "to": "Raremon"
+                }, {"from": "Snow Goburimon", "to": "Tailmon"}, {
+                    "from": "Snow Goburimon",
+                    "to": "Monochromon"
+                }, {"from": "Snow Goburimon", "to": "Yukidarumon"}, {
+                    "from": "Snow Goburimon",
+                    "to": "Hyougamon"
+                }, {"from": "Snow Goburimon", "to": "Ice Devimon"}, {
+                    "from": "Snow Goburimon",
+                    "to": "Icemon"
+                }, {"from": "Tyumon", "to": "Black Tailmon"}, {"from": "Tyumon", "to": "Scumon"}, {
+                    "from": "Tyumon",
+                    "to": "Tailmon"
+                }, {"from": "Tyumon", "to": "Gekomon"}, {"from": "Tyumon", "to": "Geremon"}, {
+                    "from": "Tyumon",
+                    "to": "Platinum Scumon"
+                }, {"from": "Dracumon", "to": "Sangloupmon"}, {"from": "Dracumon", "to": "Scumon"}, {
+                    "from": "Dracumon",
+                    "to": "Wizarmon"
+                }, {"from": "Dracumon", "to": "Starmon"}, {"from": "Hagurumon", "to": "Clockmon"}, {
+                    "from": "Hagurumon",
+                    "to": "Mechanorimon"
+                }, {"from": "Hagurumon", "to": "Tankmon"}, {
+                    "from": "Hagurumon",
+                    "to": "Guardromon"
+                }, {"from": "Hagurumon", "to": "Blimpmon"}, {
+                    "from": "Pico Devimon",
+                    "to": "Bakemon"
+                }, {"from": "Pico Devimon", "to": "Ice Devimon"}, {
+                    "from": "Pico Devimon",
+                    "to": "Devimon"
+                }, {"from": "Pico Devimon", "to": "Orgemon"}, {
+                    "from": "Funbeemon",
+                    "to": "Waspmon"
+                }, {"from": "Funbeemon", "to": "Flymon"}, {
+                    "from": "Funbeemon",
+                    "to": "Dokugumon"
+                }, {"from": "Funbeemon", "to": "Stingmon"}, {
+                    "from": "Funbeemon",
+                    "to": "Gold Numemon"
+                }, {"from": "Funbeemon", "to": "Kabuterimon"}, {
+                    "from": "Betamon",
+                    "to": "Seadramon"
+                }, {"from": "Betamon", "to": "Coelamon"}, {"from": "Betamon", "to": "Devimon"}, {
+                    "from": "Betamon",
+                    "to": "Numemon"
+                }, {"from": "Betamon", "to": "Vegimon"}, {"from": "Betamon", "to": "Tuskmon"}, {
+                    "from": "Mushmon",
+                    "to": "Scumon"
+                }, {"from": "Mushmon", "to": "Nanimon"}, {"from": "Mushmon", "to": "Woodmon"}, {
+                    "from": "Mushmon",
+                    "to": "Flymon"
+                }, {"from": "Armadimon", "to": "Digmon"}, {
+                    "from": "Armadimon",
+                    "to": "Submarimon"
+                }, {"from": "Armadimon", "to": "Golemon"}, {"from": "Armadimon", "to": "Ankylomon"}, {
+                    "from": "V-Mon",
+                    "to": "Xv-Mon"
+                }, {"from": "V-Mon", "to": "V-Dramon"}, {"from": "V-Mon", "to": "Lighdramon"}, {
+                    "from": "V-Mon",
+                    "to": "Magnamon"
+                }, {"from": "V-Mon", "to": "Fladramon"}, {"from": "Hawkmon", "to": "Firamon"}, {
+                    "from": "Hawkmon",
+                    "to": "Holsmon"
+                }, {"from": "Hawkmon", "to": "Shurimon"}, {"from": "Hawkmon", "to": "Aquilamon"}, {
+                    "from": "Wormmon",
+                    "to": "Stingmon"
+                }, {"from": "Wormmon", "to": "Dokugumon"}, {"from": "Wormmon", "to": "Snimon"}, {
+                    "from": "Keramon",
+                    "to": "Dokugumon"
+                }, {"from": "Keramon", "to": "Wendimon"}, {"from": "Keramon", "to": "Octmon"}, {
+                    "from": "Keramon",
+                    "to": "Mechanorimon"
+                }, {"from": "Keramon", "to": "Chrysalimon"}, {
+                    "from": "Aegiomon",
+                    "to": "Aegiochusmon"
+                }, {"from": "Aegiomon", "to": "Aegiochusmon: Dark"}, {
+                    "from": "Aegiomon",
+                    "to": "Aegiochusmon: Holy"
+                }, {"from": "Aegiomon", "to": "Aegiochusmon: Blue"}, {
+                    "from": "Aegiomon",
+                    "to": "Aegiochusmon: Green"
+                }, {"from": "Ikkakumon", "to": "Whamon"}, {
+                    "from": "Ikkakumon",
+                    "to": "Mega Seadramon"
+                }, {"from": "Ikkakumon", "to": "Zudomon"}, {
+                    "from": "Ikkakumon",
+                    "to": "Skullseadramon"
+                }, {"from": "Airdramon", "to": "Hisyaryumon"}, {
+                    "from": "Airdramon",
+                    "to": "Megadramon"
+                }, {"from": "Airdramon", "to": "Aero V-Dramon"}, {
+                    "from": "Airdramon",
+                    "to": "Gigadramon"
+                }, {"from": "Angemon", "to": "Hippogriffomon"}, {
+                    "from": "Angemon",
+                    "to": "Holy Angemon"
+                }, {"from": "Angemon", "to": "Sirenmon"}, {
+                    "from": "Angemon",
+                    "to": "Shakkoumon"
+                }, {"from": "Kabuterimon", "to": "Lilamon"}, {
+                    "from": "Kabuterimon",
+                    "to": "Atlur Kabuterimon"
+                }, {"from": "Kabuterimon", "to": "Cannonbeemon"}, {
+                    "from": "Kabuterimon",
+                    "to": "Chimairamon"
+                }, {"from": "Gargomon", "to": "Catch Mamemon"}, {
+                    "from": "Gargomon",
+                    "to": "Mach Gaogamon"
+                }, {"from": "Gargomon", "to": "Rapidmon Perfect"}, {
+                    "from": "Garurumon",
+                    "to": "Were Garurumon"
+                }, {"from": "Garurumon", "to": "Blue Meramon"}, {
+                    "from": "Garurumon",
+                    "to": "Taomon"
+                }, {"from": "Garurumon", "to": "Chimairamon"}, {
+                    "from": "Ginryumon",
+                    "to": "Hisyaryumon"
+                }, {"from": "Ginryumon", "to": "Skull Greymon"}, {
+                    "from": "Ginryumon",
+                    "to": "Butenmon"
+                }, {"from": "Gryzmon", "to": "Were Garurumon"}, {
+                    "from": "Gryzmon",
+                    "to": "Grappu Leomon"
+                }, {"from": "Gryzmon", "to": "Great Gryzmon"}, {
+                    "from": "Greymon",
+                    "to": "Metal Greymon"
+                }, {"from": "Greymon", "to": "Megadramon"}, {
+                    "from": "Greymon",
+                    "to": "Skull Greymon"
+                }, {"from": "Greymon", "to": "Chimairamon"}, {
+                    "from": "Coredramon (Blue)",
+                    "to": "Wingdramon"
+                }, {"from": "Coredramon (Blue)", "to": "Aero V-Dramon"}, {
+                    "from": "Coredramon (Blue)",
+                    "to": "Gigadramon"
+                }, {"from": "Geo Greymon", "to": "Rize Greymon"}, {
+                    "from": "Geo Greymon",
+                    "to": "Metal Tyranomon"
+                }, {"from": "Geo Greymon", "to": "Cyberdramon"}, {
+                    "from": "Strikedramon",
+                    "to": "Cyberdramon"
+                }, {"from": "Strikedramon", "to": "Savior Hackmon"}, {
+                    "from": "Strikedramon",
+                    "to": "Locomon"
+                }, {"from": "Snimon", "to": "Okuwamon"}, {"from": "Snimon", "to": "Fantomon"}, {
+                    "from": "Snimon",
+                    "to": "Archnemon"
+                }, {"from": "Snimon", "to": "Jewelbeemon"}, {
+                    "from": "Zubaeagermon",
+                    "to": "Grademon"
+                }, {"from": "Zubaeagermon", "to": "Megalo Growmon"}, {
+                    "from": "Zubaeagermon",
+                    "to": "Duramon"
+                }, {"from": "Zubaeagermon", "to": "Knightmon"}, {
+                    "from": "Sorcerimon",
+                    "to": "Holy Angemon"
+                }, {"from": "Sorcerimon", "to": "Piccolomon"}, {
+                    "from": "Sorcerimon",
+                    "to": "Wisemon"
+                }, {"from": "Tailmon", "to": "Nefertimon"}, {"from": "Tailmon", "to": "Angewomon"}, {
+                    "from": "Tailmon",
+                    "to": "Silphymon"
+                }, {"from": "Dobermon", "to": "Matadrmon"}, {
+                    "from": "Dobermon",
+                    "to": "Dark Super Starmon"
+                }, {"from": "Dobermon", "to": "Cerberumon"}, {
+                    "from": "Dobermon",
+                    "to": "Mummymon"
+                }, {"from": "Birdramon", "to": "Flaremon"}, {
+                    "from": "Birdramon",
+                    "to": "Garudamon"
+                }, {"from": "Birdramon", "to": "Death Meramon"}, {
+                    "from": "Birdramon",
+                    "to": "Parrotmon"
+                }, {"from": "Firamon", "to": "Flaremon"}, {
+                    "from": "Firamon",
+                    "to": "Savior Hackmon"
+                }, {"from": "Firamon", "to": "Mistymon"}, {"from": "V-Dramon", "to": "Wingdramon"}, {
+                    "from": "V-Dramon",
+                    "to": "Aero V-Dramon"
+                }, {"from": "V-Dramon", "to": "Cyberdramon"}, {
+                    "from": "Buraimon",
+                    "to": "Butenmon"
+                }, {"from": "Buraimon", "to": "Duramon"}, {"from": "Buraimon", "to": "Garudamon"}, {
+                    "from": "Peckmon",
+                    "to": "Tyilinmon"
+                }, {"from": "Peckmon", "to": "Vamdemon"}, {"from": "Peckmon", "to": "Yatagaramon"}, {
+                    "from": "Mojyamon",
+                    "to": "Zudomon"
+                }, {"from": "Mojyamon", "to": "Piccolomon"}, {
+                    "from": "Mojyamon",
+                    "to": "Mistymon"
+                }, {"from": "Mojyamon", "to": "Mammon"}, {
+                    "from": "Yukidarumon",
+                    "to": "Crescemon"
+                }, {"from": "Yukidarumon", "to": "Angewomon"}, {
+                    "from": "Yukidarumon",
+                    "to": "Panjyamon"
+                }, {"from": "Yukidarumon", "to": "Insekimon"}, {
+                    "from": "Yukidarumon",
+                    "to": "Mammon"
+                }, {"from": "Unimon", "to": "Hippogriffomon"}, {
+                    "from": "Unimon",
+                    "to": "Holy Angemon"
+                }, {"from": "Unimon", "to": "Tyilinmon"}, {
+                    "from": "Raptordramon",
+                    "to": "Grademon"
+                }, {"from": "Raptordramon", "to": "Gigadramon"}, {
+                    "from": "Raptordramon",
+                    "to": "Tankdramon"
+                }, {"from": "Revolmon", "to": "Pandamon"}, {
+                    "from": "Revolmon",
+                    "to": "Super Starmon"
+                }, {"from": "Revolmon", "to": "Wisemon"}, {"from": "Leomon", "to": "Flaremon"}, {
+                    "from": "Leomon",
+                    "to": "Grappu Leomon"
+                }, {"from": "Leomon", "to": "Panjyamon"}, {
+                    "from": "Leomon",
+                    "to": "Loader Leomon"
+                }, {"from": "Reppamon", "to": "Tyilinmon"}, {
+                    "from": "Reppamon",
+                    "to": "Mega Seadramon"
+                }, {"from": "Reppamon", "to": "Angewomon"}, {
+                    "from": "Reppamon",
+                    "to": "Doruguremon"
+                }, {"from": "Icemon", "to": "Crescemon"}, {"from": "Icemon", "to": "Insekimon"}, {
+                    "from": "Icemon",
+                    "to": "Panjyamon"
+                }, {"from": "Wizarmon", "to": "Nanomon"}, {"from": "Wizarmon", "to": "Mistymon"}, {
+                    "from": "Wizarmon",
+                    "to": "Wisemon"
+                }, {"from": "Witchmon", "to": "Lady Devimon"}, {
+                    "from": "Witchmon",
+                    "to": "Angewomon"
+                }, {"from": "Witchmon", "to": "Lilimon"}, {
+                    "from": "Gaogamon",
+                    "to": "Mach Gaogamon"
+                }, {"from": "Gaogamon", "to": "Savior Hackmon"}, {
+                    "from": "Gaogamon",
+                    "to": "Dark Super Starmon"
+                }, {"from": "Gawappamon", "to": "Shawujinmon"}, {
+                    "from": "Gawappamon",
+                    "to": "Hangyomon"
+                }, {"from": "Gawappamon", "to": "Tonosama Gekomon"}, {
+                    "from": "Kiwimon",
+                    "to": "Lilamon"
+                }, {"from": "Kiwimon", "to": "Sirenmon"}, {"from": "Kiwimon", "to": "Delumon"}, {
+                    "from": "Kiwimon",
+                    "to": "Jyureimon"
+                }, {"from": "Kyubimon", "to": "Blue Meramon"}, {
+                    "from": "Kyubimon",
+                    "to": "Cerberumon"
+                }, {"from": "Kyubimon", "to": "Taomon"}, {"from": "Kyubimon", "to": "Enbarrmon"}, {
+                    "from": "Clockmon",
+                    "to": "Ex-Tyranomon"
+                }, {"from": "Clockmon", "to": "Andromon"}, {"from": "Clockmon", "to": "Zudomon"}, {
+                    "from": "Clockmon",
+                    "to": "Knightmon"
+                }, {"from": "Centalmon", "to": "Andromon"}, {
+                    "from": "Centalmon",
+                    "to": "Nanomon"
+                }, {"from": "Centalmon", "to": "Rapidmon Perfect"}, {
+                    "from": "Sunflowmon",
+                    "to": "Lilamon"
+                }, {"from": "Sunflowmon", "to": "Lilimon"}, {
+                    "from": "Sunflowmon",
+                    "to": "Delumon"
+                }, {"from": "Sunflowmon", "to": "Pumpmon"}, {"from": "Seadramon", "to": "Whamon"}, {
+                    "from": "Seadramon",
+                    "to": "Mega Seadramon"
+                }, {"from": "Seadramon", "to": "Waru Seadramon"}, {
+                    "from": "Seadramon",
+                    "to": "Hisyaryumon"
+                }, {"from": "Seadramon", "to": "Sharkmon"}, {
+                    "from": "Seadramon",
+                    "to": "Skullseadramon"
+                }, {"from": "Coelamon", "to": "Waru Seadramon"}, {
+                    "from": "Coelamon",
+                    "to": "Metal Tyranomon"
+                }, {"from": "Coelamon", "to": "Anomalocarimon"}, {
+                    "from": "Coelamon",
+                    "to": "Hangyomon"
+                }, {"from": "Coelamon", "to": "Skullseadramon"}, {
+                    "from": "Shellmon",
+                    "to": "Whamon"
+                }, {"from": "Shellmon", "to": "Piccolomon"}, {
+                    "from": "Shellmon",
+                    "to": "Anomalocarimon"
+                }, {"from": "Starmon", "to": "Volcamon"}, {
+                    "from": "Starmon",
+                    "to": "Super Starmon"
+                }, {"from": "Starmon", "to": "Dark Super Starmon"}, {
+                    "from": "Starmon",
+                    "to": "Mamemon"
+                }, {"from": "Tankmon", "to": "Big Mamemon"}, {"from": "Tankmon", "to": "Locomon"}, {
+                    "from": "Tankmon",
+                    "to": "Tankdramon"
+                }, {"from": "Tuchidarumon", "to": "Delumon"}, {
+                    "from": "Tuchidarumon",
+                    "to": "Gerbemon"
+                }, {"from": "Tuchidarumon", "to": "Andiramon"}, {
+                    "from": "Dinohumon",
+                    "to": "Shawujinmon"
+                }, {"from": "Dinohumon", "to": "Grademon"}, {
+                    "from": "Dinohumon",
+                    "to": "Knightmon"
+                }, {"from": "Tyranomon", "to": "Ex-Tyranomon"}, {
+                    "from": "Tyranomon",
+                    "to": "Groundramon"
+                }, {"from": "Tyranomon", "to": "Metal Greymon"}, {
+                    "from": "Tyranomon",
+                    "to": "Metal Tyranomon"
+                }, {"from": "Turuiemon", "to": "Matadrmon"}, {
+                    "from": "Turuiemon",
+                    "to": "Mach Gaogamon"
+                }, {"from": "Turuiemon", "to": "Andiramon"}, {"from": "Togemon", "to": "Lilimon"}, {
+                    "from": "Togemon",
+                    "to": "Jyureimon"
+                }, {"from": "Togemon", "to": "Pumpmon"}, {
+                    "from": "Drimogemon",
+                    "to": "Triceramon"
+                }, {"from": "Drimogemon", "to": "Loader Leomon"}, {
+                    "from": "Drimogemon",
+                    "to": "Brachiomon"
+                }, {"from": "Dorugamon", "to": "Rize Greymon"}, {
+                    "from": "Dorugamon",
+                    "to": "Doruguremon"
+                }, {"from": "Dorugamon", "to": "Great Gryzmon"}, {
+                    "from": "Bao Hackmon",
+                    "to": "Rize Greymon"
+                }, {"from": "Bao Hackmon", "to": "Savior Hackmon"}, {
+                    "from": "Bao Hackmon",
+                    "to": "Loader Leomon"
+                }, {"from": "Blimpmon", "to": "Locomon"}, {
+                    "from": "Blimpmon",
+                    "to": "Metal Mamemon"
+                }, {"from": "Blimpmon", "to": "Master Blimpmon"}, {
+                    "from": "Meramon",
+                    "to": "Big Mamemon"
+                }, {"from": "Meramon", "to": "Blue Meramon"}, {
+                    "from": "Meramon",
+                    "to": "Death Meramon"
+                }, {"from": "Monochromon", "to": "Triceramon"}, {
+                    "from": "Monochromon",
+                    "to": "Cerberumon"
+                }, {"from": "Monochromon", "to": "Mammon"}, {
+                    "from": "Lekismon",
+                    "to": "Crescemon"
+                }, {"from": "Lekismon", "to": "Were Garurumon"}, {
+                    "from": "Lekismon",
+                    "to": "Grappu Leomon"
+                }, {"from": "Ice Devimon", "to": "Crescemon"}, {
+                    "from": "Ice Devimon",
+                    "to": "Lady Devimon"
+                }, {"from": "Ice Devimon", "to": "Panjyamon"}, {
+                    "from": "Ice Devimon",
+                    "to": "Enbarrmon"
+                }, {"from": "Wendimon", "to": "Archnemon"}, {
+                    "from": "Wendimon",
+                    "to": "Death Meramon"
+                }, {"from": "Wendimon", "to": "Andiramon"}, {"from": "Woodmon", "to": "Jyureimon"}, {
+                    "from": "Woodmon",
+                    "to": "Taomon"
+                }, {"from": "Woodmon", "to": "Pumpmon"}, {"from": "Orgemon", "to": "Skull Satamon"}, {
+                    "from": "Orgemon",
+                    "to": "Mummymon"
+                }, {"from": "Orgemon", "to": "Digitamamon"}, {"from": "Octmon", "to": "Dagomon"}, {
+                    "from": "Octmon",
+                    "to": "Digitamamon"
+                }, {"from": "Octmon", "to": "Hangyomon"}, {
+                    "from": "Guardromon",
+                    "to": "Catch Mamemon"
+                }, {"from": "Guardromon", "to": "Locomon"}, {
+                    "from": "Guardromon",
+                    "to": "Andromon"
+                }, {"from": "Karatuki Numemon", "to": "Orochimon"}, {
+                    "from": "Karatuki Numemon",
+                    "to": "Waru Seadramon"
+                }, {"from": "Karatuki Numemon", "to": "Black King Numemon"}, {
+                    "from": "Karatuki Numemon",
+                    "to": "Pandamon"
+                }, {"from": "Growmon", "to": "Megalo Growmon"}, {
+                    "from": "Growmon",
+                    "to": "Groundramon"
+                }, {"from": "Growmon", "to": "Doruguremon"}, {
+                    "from": "Kuwagamon",
+                    "to": "Jyureimon"
+                }, {"from": "Kuwagamon", "to": "Okuwamon"}, {
+                    "from": "Kuwagamon",
+                    "to": "Anomalocarimon"
+                }, {"from": "Kuwagamon", "to": "Chimairamon"}, {
+                    "from": "Gekomon",
+                    "to": "Sirenmon"
+                }, {"from": "Gekomon", "to": "Tonosama Gekomon"}, {
+                    "from": "Gekomon",
+                    "to": "Hangyomon"
+                }, {"from": "Geremon", "to": "Catch Mamemon"}, {
+                    "from": "Geremon",
+                    "to": "Super Starmon"
+                }, {"from": "Geremon", "to": "Monzaemon"}, {
+                    "from": "Coredramon (Green)",
+                    "to": "Megalo Growmon"
+                }, {"from": "Coredramon (Green)", "to": "Groundramon"}, {
+                    "from": "Coredramon (Green)",
+                    "to": "Skull Greymon"
+                }, {"from": "Gold Numemon", "to": "Waru Seadramon"}, {
+                    "from": "Gold Numemon",
+                    "to": "Vademon"
+                }, {"from": "Gold Numemon", "to": "Black King Numemon"}, {
+                    "from": "Golemon",
+                    "to": "Volcamon"
+                }, {"from": "Golemon", "to": "Mammon"}, {"from": "Golemon", "to": "Insekimon"}, {
+                    "from": "Cyclomon",
+                    "to": "Grademon"
+                }, {"from": "Cyclomon", "to": "Cyberdramon"}, {
+                    "from": "Cyclomon",
+                    "to": "Brachiomon"
+                }, {"from": "Sangloupmon", "to": "Matadrmon"}, {
+                    "from": "Sangloupmon",
+                    "to": "Vamdemon"
+                }, {"from": "Sangloupmon", "to": "Astamon"}, {"from": "Scumon", "to": "Monzaemon"}, {
+                    "from": "Scumon",
+                    "to": "Etemon"
+                }, {"from": "Scumon", "to": "Gerbemon"}, {"from": "Scumon", "to": "Mamemon"}, {
+                    "from": "Tuskmon",
+                    "to": "Triceramon"
+                }, {"from": "Tuskmon", "to": "Groundramon"}, {
+                    "from": "Tuskmon",
+                    "to": "Digitamamon"
+                }, {"from": "Devimon", "to": "Vamdemon"}, {"from": "Devimon", "to": "Lady Devimon"}, {
+                    "from": "Devimon",
+                    "to": "Infermon"
+                }, {"from": "Devimon", "to": "Skull Satamon"}, {
+                    "from": "Devimon",
+                    "to": "Astamon"
+                }, {"from": "Deltamon", "to": "Orochimon"}, {
+                    "from": "Deltamon",
+                    "to": "Chimairamon"
+                }, {"from": "Deltamon", "to": "Skull Baluchimon"}, {
+                    "from": "Deltamon",
+                    "to": "Metal Greymon"
+                }, {"from": "Deltamon", "to": "Sharkmon"}, {
+                    "from": "Dokugumon",
+                    "to": "Archnemon"
+                }, {"from": "Dokugumon", "to": "Mummymon"}, {
+                    "from": "Dokugumon",
+                    "to": "Atlur Kabuterimon"
+                }, {"from": "Dokugumon", "to": "Infermon"}, {"from": "Nanimon", "to": "Volcamon"}, {
+                    "from": "Nanimon",
+                    "to": "Super Starmon"
+                }, {"from": "Nanimon", "to": "Etemon"}, {"from": "Nanimon", "to": "Mamemon"}, {
+                    "from": "Numemon",
+                    "to": "Monzaemon"
+                }, {"from": "Numemon", "to": "Dark Super Starmon"}, {
+                    "from": "Numemon",
+                    "to": "Etemon"
+                }, {"from": "Bakemon", "to": "Vamdemon"}, {"from": "Bakemon", "to": "Blue Meramon"}, {
+                    "from": "Bakemon",
+                    "to": "Fantomon"
+                }, {"from": "Bakemon", "to": "Enbarrmon"}, {"from": "Hyougamon", "to": "Zudomon"}, {
+                    "from": "Hyougamon",
+                    "to": "Fantomon"
+                }, {"from": "Hyougamon", "to": "Panjyamon"}, {"from": "Fugamon", "to": "Volcamon"}, {
+                    "from": "Fugamon",
+                    "to": "Skull Satamon"
+                }, {"from": "Fugamon", "to": "Garudamon"}, {"from": "Flymon", "to": "Megadramon"}, {
+                    "from": "Flymon",
+                    "to": "Atlur Kabuterimon"
+                }, {"from": "Flymon", "to": "Okuwamon"}, {
+                    "from": "Flymon",
+                    "to": "Jewelbeemon"
+                }, {"from": "Platinum Scumon", "to": "Vademon"}, {
+                    "from": "Platinum Scumon",
+                    "to": "Mamemon"
+                }, {"from": "Platinum Scumon", "to": "Metal Mamemon"}, {
+                    "from": "Black Tailmon",
+                    "to": "Pandamon"
+                }, {"from": "Black Tailmon", "to": "Lady Devimon"}, {
+                    "from": "Black Tailmon",
+                    "to": "Skull Baluchimon"
+                }, {"from": "Vegimon", "to": "Tonosama Gekomon"}, {
+                    "from": "Vegimon",
+                    "to": "Gerbemon"
+                }, {"from": "Vegimon", "to": "Vademon"}, {
+                    "from": "Minotaurmon",
+                    "to": "Triceramon"
+                }, {"from": "Minotaurmon", "to": "Etemon"}, {
+                    "from": "Minotaurmon",
+                    "to": "Grappu Leomon"
+                }, {"from": "Musyamon", "to": "Grademon"}, {"from": "Musyamon", "to": "Butenmon"}, {
+                    "from": "Musyamon",
+                    "to": "Hisyaryumon"
+                }, {"from": "Mechanorimon", "to": "Big Mamemon"}, {
+                    "from": "Mechanorimon",
+                    "to": "Megadramon"
+                }, {"from": "Mechanorimon", "to": "Nanomon"}, {"from": "Raremon", "to": "Dagomon"}, {
+                    "from": "Raremon",
+                    "to": "Black King Numemon"
+                }, {"from": "Raremon", "to": "Tonosama Gekomon"}, {
+                    "from": "Raremon",
+                    "to": "Ex-Tyranomon"
+                }, {"from": "Raremon", "to": "Skull Baluchimon"}, {
+                    "from": "Waspmon",
+                    "to": "Rapidmon Perfect"
+                }, {"from": "Waspmon", "to": "Cannonbeemon"}, {
+                    "from": "Waspmon",
+                    "to": "Tankdramon"
+                }, {"from": "Aquilamon", "to": "Garudamon"}, {
+                    "from": "Aquilamon",
+                    "to": "Parrotmon"
+                }, {"from": "Aquilamon", "to": "Silphymon"}, {
+                    "from": "Aquilamon",
+                    "to": "Yatagaramon"
+                }, {"from": "Ankylomon", "to": "Shakkoumon"}, {
+                    "from": "Ankylomon",
+                    "to": "Insekimon"
+                }, {"from": "Ankylomon", "to": "Brachiomon"}, {"from": "Xv-Mon", "to": "Dinobeemon"}, {
+                    "from": "Xv-Mon",
+                    "to": "Rize Greymon"
+                }, {"from": "Xv-Mon", "to": "Paildramon"}, {
+                    "from": "Guardromon (Gold)",
+                    "to": "Duramon"
+                }, {"from": "Guardromon (Gold)", "to": "Cannonbeemon"}, {
+                    "from": "Guardromon (Gold)",
+                    "to": "Master Blimpmon"
+                }, {"from": "Stingmon", "to": "Okuwamon"}, {
+                    "from": "Stingmon",
+                    "to": "Jewelbeemon"
+                }, {"from": "Stingmon", "to": "Dinobeemon"}, {
+                    "from": "Stingmon",
+                    "to": "Paildramon"
+                }, {"from": "Chrysalimon", "to": "Dagomon"}, {
+                    "from": "Chrysalimon",
+                    "to": "Orochimon"
+                }, {"from": "Chrysalimon", "to": "Archnemon"}, {
+                    "from": "Chrysalimon",
+                    "to": "Infermon"
+                }, {"from": "Agnimon", "to": "Aldamon"}, {"from": "Agnimon", "to": "Vritramon"}, {
+                    "from": "Wolfmon",
+                    "to": "Beowolfmon"
+                }, {"from": "Wolfmon", "to": "Garummon"}, {
+                    "from": "Ranamon",
+                    "to": "Calamaramon"
+                }, {"from": "Vritramon", "to": "Aldamon"}, {
+                    "from": "Vritramon",
+                    "to": "Agnimon"
+                }, {"from": "Calamaramon", "to": "Ranamon"}, {
+                    "from": "Garummon",
+                    "to": "Beowolfmon"
+                }, {"from": "Garummon", "to": "Wolfmon"}, {
+                    "from": "Aegiochusmon",
+                    "to": "Jupitermon"
+                }, {"from": "Aegiochusmon: Green", "to": "Jupitermon"}, {
+                    "from": "Aegiochusmon: Dark",
+                    "to": "Chronomon Destroy"
+                }, {"from": "Aegiochusmon: Blue", "to": "Jupitermon"}, {
+                    "from": "Aegiochusmon: Holy",
+                    "to": "Jupitermon"
+                }, {"from": "Atlur Kabuterimon", "to": "Tyrant Kabuterimon"}, {
+                    "from": "Atlur Kabuterimon",
+                    "to": "Herakle Kabuterimon"
+                }, {"from": "Andromon", "to": "Hi Andromon"}, {
+                    "from": "Andromon",
+                    "to": "Boltmon"
+                }, {"from": "Andromon", "to": "Craniummon"}, {
+                    "from": "Wingdramon",
+                    "to": "Shine Greymon"
+                }, {"from": "Wingdramon", "to": "Valdurmon"}, {
+                    "from": "Wingdramon",
+                    "to": "Slayerdramon"
+                }, {"from": "Aero V-Dramon", "to": "Goddramon"}, {
+                    "from": "Aero V-Dramon",
+                    "to": "Slayerdramon"
+                }, {"from": "Aero V-Dramon", "to": "Ulforce V-Dramon"}, {
+                    "from": "Ex-Tyranomon",
+                    "to": "Rust Tyranomon"
+                }, {"from": "Ex-Tyranomon", "to": "Belphemon: Sleep Mode"}, {
+                    "from": "Ex-Tyranomon",
+                    "to": "Cherubimon (Virtue)"
+                }, {"from": "Angewomon", "to": "Junomon"}, {
+                    "from": "Angewomon",
+                    "to": "Ofanimon"
+                }, {"from": "Angewomon", "to": "Holydramon"}, {
+                    "from": "Angewomon",
+                    "to": "Mastemon"
+                }, {"from": "Garudamon", "to": "Griffomon"}, {
+                    "from": "Garudamon",
+                    "to": "Hououmon"
+                }, {"from": "Garudamon", "to": "Jesmon"}, {
+                    "from": "Grappu Leomon",
+                    "to": "Bancho Leomon"
+                }, {"from": "Grappu Leomon", "to": "Marsmon"}, {
+                    "from": "Grappu Leomon",
+                    "to": "Saber Leomon"
+                }, {"from": "Grappu Leomon", "to": "Duftmon"}, {
+                    "from": "Grademon",
+                    "to": "Alphamon"
+                }, {"from": "Grademon", "to": "Durandamon"}, {
+                    "from": "Grademon",
+                    "to": "Dynasmon"
+                }, {"from": "Great Gryzmon", "to": "Callismon"}, {
+                    "from": "Great Gryzmon",
+                    "to": "Cherubimon (Vice)"
+                }, {"from": "Cerberumon", "to": "Plutomon"}, {
+                    "from": "Cerberumon",
+                    "to": "Cerberumon: Werewolf Mode"
+                }, {"from": "Cerberumon", "to": "Saber Leomon"}, {
+                    "from": "Cerberumon: Werewolf Mode",
+                    "to": "Plutomon"
+                }, {"from": "Cerberumon: Werewolf Mode", "to": "Cerberumon"}, {
+                    "from": "Cerberumon: Werewolf Mode",
+                    "to": "Saber Leomon"
+                }, {"from": "Cyberdramon", "to": "Ulforce V-Dramon"}, {
+                    "from": "Cyberdramon",
+                    "to": "Justimon"
+                }, {"from": "Jewelbeemon", "to": "Herakle Kabuterimon"}, {
+                    "from": "Jewelbeemon",
+                    "to": "Tiger Vespamon"
+                }, {"from": "Zudomon", "to": "Vikemon"}, {"from": "Zudomon", "to": "Plesiomon"}, {
+                    "from": "Tyilinmon",
+                    "to": "Sleipmon"
+                }, {"from": "Tyilinmon", "to": "Crossmon"}, {
+                    "from": "Tyilinmon",
+                    "to": "Valkyrimon"
+                }, {"from": "Duramon", "to": "War Greymon"}, {"from": "Duramon", "to": "Dukemon"}, {
+                    "from": "Duramon",
+                    "to": "Durandamon"
+                }, {"from": "Parrotmon", "to": "Crossmon"}, {
+                    "from": "Parrotmon",
+                    "to": "Hououmon"
+                }, {"from": "Panjyamon", "to": "Mirage Gaogamon"}, {
+                    "from": "Panjyamon",
+                    "to": "Saber Leomon"
+                }, {"from": "Hisyaryumon", "to": "Ouryumon"}, {
+                    "from": "Hisyaryumon",
+                    "to": "Gaioumon"
+                }, {"from": "Butenmon", "to": "Chronomon"}, {
+                    "from": "Butenmon",
+                    "to": "Chronomon Destroy"
+                }, {"from": "Butenmon", "to": "Griffomon"}, {"from": "Butenmon", "to": "Gaioumon"}, {
+                    "from": "Flaremon",
+                    "to": "Apollomon"
+                }, {"from": "Flaremon", "to": "Seraphimon"}, {"from": "Whamon", "to": "Leviamon"}, {
+                    "from": "Whamon",
+                    "to": "Neptunemon"
+                }, {"from": "Whamon", "to": "Plesiomon"}, {
+                    "from": "Whamon",
+                    "to": "Marin Angemon"
+                }, {"from": "Holy Angemon", "to": "Goddramon"}, {
+                    "from": "Holy Angemon",
+                    "to": "Seraphimon"
+                }, {"from": "Holy Angemon", "to": "Clavis Angemon"}, {
+                    "from": "Holy Angemon",
+                    "to": "Slash Angemon"
+                }, {"from": "Mammon", "to": "Vikemon"}, {
+                    "from": "Mammon",
+                    "to": "Skull Mammon"
+                }, {"from": "Metal Greymon", "to": "War Greymon"}, {
+                    "from": "Metal Greymon",
+                    "to": "Gaioumon"
+                }, {"from": "Monzaemon", "to": "King Etemon"}, {
+                    "from": "Monzaemon",
+                    "to": "Callismon"
+                }, {"from": "Yatagaramon", "to": "Valdurmon"}, {
+                    "from": "Yatagaramon",
+                    "to": "Ravmon"
+                }, {"from": "Yatagaramon", "to": "Kuzuhamon"}, {
+                    "from": "Rize Greymon",
+                    "to": "Sleipmon"
+                }, {"from": "Rize Greymon", "to": "Shine Greymon"}, {
+                    "from": "Rize Greymon",
+                    "to": "Magna Kidmon"
+                }, {"from": "Rapidmon Perfect", "to": "Saint Galgomon"}, {
+                    "from": "Rapidmon Perfect",
+                    "to": "Hi Andromon"
+                }, {"from": "Loader Leomon", "to": "Bancho Leomon"}, {
+                    "from": "Loader Leomon",
+                    "to": "Metal Garurumon"
+                }, {"from": "Loader Leomon", "to": "Chaosdramon"}, {
+                    "from": "Were Garurumon",
+                    "to": "Mercurymon"
+                }, {"from": "Were Garurumon", "to": "Metal Garurumon"}, {
+                    "from": "Anomalocarimon",
+                    "to": "Vulcanusmon"
+                }, {"from": "Anomalocarimon", "to": "Pukumon"}, {
+                    "from": "Enbarrmon",
+                    "to": "Sleipmon"
+                }, {"from": "Enbarrmon", "to": "Skull Mammon"}, {
+                    "from": "Enbarrmon",
+                    "to": "Enbarrmon Craniummon"
+                }, {"from": "Andiramon", "to": "Dianamon"}, {
+                    "from": "Andiramon",
+                    "to": "Cherubimon (Virtue)"
+                }, {"from": "Andiramon", "to": "Cherubimon (Vice)"}, {
+                    "from": "Insekimon",
+                    "to": "Metal Etemon"
+                }, {"from": "Insekimon", "to": "Boltmon"}, {
+                    "from": "Omega Shoutmon",
+                    "to": "Pile Volcamon"
+                }, {"from": "Omega Shoutmon", "to": "Magna Kidmon"}, {
+                    "from": "Omega Shoutmon",
+                    "to": "Durandamon"
+                }, {"from": "Chimairamon", "to": "Grand Dracumon"}, {
+                    "from": "Chimairamon",
+                    "to": "Millenniumon"
+                }, {"from": "Chimairamon", "to": "Mugendramon"}, {
+                    "from": "Catch Mamemon",
+                    "to": "Platinum Numemon"
+                }, {"from": "Catch Mamemon", "to": "Prince Mamemon"}, {
+                    "from": "Crescemon",
+                    "to": "Dianamon"
+                }, {"from": "Crescemon", "to": "Cherubimon (Virtue)"}, {
+                    "from": "Crescemon",
+                    "to": "Lord Knightmon"
+                }, {"from": "Super Starmon", "to": "Goddramon"}, {
+                    "from": "Super Starmon",
+                    "to": "Prince Mamemon"
+                }, {"from": "Super Starmon", "to": "Justimon"}, {
+                    "from": "Skull Baluchimon",
+                    "to": "Skull Mammon"
+                }, {"from": "Skull Baluchimon", "to": "Skull Baluchimon Titamon"}, {
+                    "from": "Savior Hackmon",
+                    "to": "Gankoomon"
+                }, {"from": "Savior Hackmon", "to": "Tiger Vespamon"}, {
+                    "from": "Savior Hackmon",
+                    "to": "Jesmon"
+                }, {"from": "Sirenmon", "to": "Marin Angemon"}, {
+                    "from": "Sirenmon",
+                    "to": "Ceresmon"
+                }, {"from": "Taomon", "to": "Venusmon"}, {"from": "Taomon", "to": "Sakuyamon"}, {
+                    "from": "Taomon",
+                    "to": "Kuzuhamon"
+                }, {"from": "Digitamamon", "to": "Bacchusmon"}, {
+                    "from": "Digitamamon",
+                    "to": "Titamon"
+                }, {"from": "Death Meramon", "to": "Beelzebumon"}, {
+                    "from": "Death Meramon",
+                    "to": "Boltmon"
+                }, {"from": "Death Meramon", "to": "Avenge Kidmon"}, {
+                    "from": "Delumon",
+                    "to": "Valdurmon"
+                }, {"from": "Delumon", "to": "Ceresmon"}, {
+                    "from": "Delumon",
+                    "to": "Platinum Numemon"
+                }, {"from": "Triceramon", "to": "Breakdramon"}, {
+                    "from": "Triceramon",
+                    "to": "Ultimate Brachiomon"
+                }, {"from": "Doruguremon", "to": "Dorugoramon"}, {
+                    "from": "Doruguremon",
+                    "to": "Alphamon"
+                }, {"from": "Knightmon", "to": "Zanbamon"}, {
+                    "from": "Knightmon",
+                    "to": "Slash Angemon"
+                }, {"from": "Knightmon", "to": "Lord Knightmon"}, {
+                    "from": "Knightmon",
+                    "to": "Duftmon"
+                }, {"from": "Hangyomon", "to": "Neptunemon"}, {
+                    "from": "Hangyomon",
+                    "to": "Plesiomon"
+                }, {"from": "Pandamon", "to": "Mercurymon"}, {
+                    "from": "Pandamon",
+                    "to": "Mirage Gaogamon"
+                }, {"from": "Pandamon", "to": "Justimon"}, {"from": "Pumpmon", "to": "Rosemon"}, {
+                    "from": "Pumpmon",
+                    "to": "Lotusmon"
+                }, {"from": "Big Mamemon", "to": "Platinum Numemon"}, {
+                    "from": "Big Mamemon",
+                    "to": "Prince Mamemon"
+                }, {"from": "Big Mamemon", "to": "Grand Locomon"}, {
+                    "from": "Piccolomon",
+                    "to": "Venusmon"
+                }, {"from": "Piccolomon", "to": "Ofanimon"}, {
+                    "from": "Piccolomon",
+                    "to": "Clavis Angemon"
+                }, {"from": "Hippogriffomon", "to": "Griffomon"}, {
+                    "from": "Hippogriffomon",
+                    "to": "Crossmon"
+                }, {"from": "Hippogriffomon", "to": "Dynasmon"}, {
+                    "from": "Brachiomon",
+                    "to": "Ouryumon"
+                }, {"from": "Brachiomon", "to": "Rust Tyranomon"}, {
+                    "from": "Brachiomon",
+                    "to": "Ultimate Brachiomon"
+                }, {"from": "Volcamon", "to": "Bancho Leomon"}, {
+                    "from": "Volcamon",
+                    "to": "Pile Volcamon"
+                }, {"from": "Volcamon", "to": "Gankoomon"}, {
+                    "from": "Volcamon",
+                    "to": "Apollomon"
+                }, {"from": "Master Blimpmon", "to": "Grand Locomon"}, {
+                    "from": "Master Blimpmon",
+                    "to": "Gundramon"
+                }, {"from": "Mach Gaogamon", "to": "Mirage Gaogamon"}, {
+                    "from": "Mach Gaogamon",
+                    "to": "Saint Galgomon"
+                }, {"from": "Mamemon", "to": "Pukumon"}, {
+                    "from": "Mamemon",
+                    "to": "Prince Mamemon"
+                }, {"from": "Mega Seadramon", "to": "Jumbo Gamemon"}, {
+                    "from": "Mega Seadramon",
+                    "to": "Ouryumon"
+                }, {"from": "Mega Seadramon", "to": "Metal Seadramon"}, {
+                    "from": "Metal Mamemon",
+                    "to": "Metal Garurumon"
+                }, {"from": "Metal Mamemon", "to": "Magna Kidmon"}, {
+                    "from": "Lilamon",
+                    "to": "Lilithmon"
+                }, {"from": "Lilamon", "to": "Rosemon"}, {"from": "Lilamon", "to": "Pinochimon"}, {
+                    "from": "Lilimon",
+                    "to": "Rosemon"
+                }, {"from": "Lilimon", "to": "Ceresmon"}, {
+                    "from": "Locomon",
+                    "to": "Grand Locomon"
+                }, {"from": "Locomon", "to": "Hi Andromon"}, {
+                    "from": "Astamon",
+                    "to": "Beelzebumon"
+                }, {"from": "Astamon", "to": "Plutomon"}, {
+                    "from": "Astamon",
+                    "to": "Belphemon: Sleep Mode"
+                }, {"from": "Astamon", "to": "Venom Vamdemon"}, {
+                    "from": "Archnemon",
+                    "to": "Lilithmon"
+                }, {"from": "Archnemon", "to": "Tyrant Kabuterimon"}, {
+                    "from": "Archnemon",
+                    "to": "Lotusmon"
+                }, {"from": "Vamdemon", "to": "Demon"}, {
+                    "from": "Vamdemon",
+                    "to": "Belial Vamdemon"
+                }, {"from": "Vamdemon", "to": "Venom Vamdemon"}, {
+                    "from": "Etemon",
+                    "to": "Pile Volcamon"
+                }, {"from": "Etemon", "to": "King Etemon"}, {
+                    "from": "Etemon",
+                    "to": "Metal Etemon"
+                }, {"from": "Okuwamon", "to": "Tyrant Kabuterimon"}, {
+                    "from": "Okuwamon",
+                    "to": "Herakle Kabuterimon"
+                }, {"from": "Okuwamon", "to": "Gran Kuwagamon"}, {
+                    "from": "Orochimon",
+                    "to": "Bacchusmon"
+                }, {"from": "Orochimon", "to": "Gundramon"}, {
+                    "from": "Orochimon",
+                    "to": "Minervamon"
+                }, {"from": "Gerbemon", "to": "Jumbo Gamemon"}, {
+                    "from": "Gerbemon",
+                    "to": "Metal Etemon"
+                }, {"from": "Gigadramon", "to": "Gundramon"}, {
+                    "from": "Gigadramon",
+                    "to": "Chaosdramon"
+                }, {"from": "Cannonbeemon", "to": "Saint Galgomon"}, {
+                    "from": "Cannonbeemon",
+                    "to": "Tiger Vespamon"
+                }, {"from": "Groundramon", "to": "Megidramon"}, {
+                    "from": "Groundramon",
+                    "to": "Breakdramon"
+                }, {"from": "Sharkmon", "to": "Neptunemon"}, {
+                    "from": "Sharkmon",
+                    "to": "Metal Seadramon"
+                }, {"from": "Shawujinmon", "to": "Barbamon"}, {
+                    "from": "Shawujinmon",
+                    "to": "Jumbo Gamemon"
+                }, {"from": "Shawujinmon", "to": "Pinochimon"}, {
+                    "from": "Jyureimon",
+                    "to": "Pinochimon"
+                }, {"from": "Jyureimon", "to": "Rosemon"}, {
+                    "from": "Jyureimon",
+                    "to": "Gran Kuwagamon"
+                }, {"from": "Skull Greymon", "to": "Titamon"}, {
+                    "from": "Skull Greymon",
+                    "to": "Skull Mammon"
+                }, {"from": "Skull Satamon", "to": "Barbamon"}, {
+                    "from": "Skull Satamon",
+                    "to": "Piemon"
+                }, {"from": "Skull Satamon", "to": "Ebemon"}, {
+                    "from": "Skullseadramon",
+                    "to": "Leviamon"
+                }, {"from": "Skullseadramon", "to": "Metal Seadramon"}, {
+                    "from": "Dark Super Starmon",
+                    "to": "Beel Starmon"
+                }, {"from": "Dark Super Starmon", "to": "Titamon"}, {
+                    "from": "Dark Super Starmon",
+                    "to": "Ravmon"
+                }, {"from": "Dagomon", "to": "Vulcanusmon"}, {"from": "Dagomon", "to": "Ebemon"}, {
+                    "from": "Tankdramon",
+                    "to": "Gundramon"
+                }, {"from": "Tankdramon", "to": "Darkdramon"}, {
+                    "from": "Tonosama Gekomon",
+                    "to": "King Etemon"
+                }, {"from": "Tonosama Gekomon", "to": "Bacchusmon"}, {
+                    "from": "Tonosama Gekomon",
+                    "to": "Pukumon"
+                }, {"from": "Nanomon", "to": "Pharaohmon"}, {"from": "Nanomon", "to": "Diablomon"}, {
+                    "from": "Fantomon",
+                    "to": "Sakuyamon"
+                }, {"from": "Fantomon", "to": "Piemon"}, {
+                    "from": "Fantomon",
+                    "to": "Belphemon: Sleep Mode"
+                }, {"from": "Fantomon", "to": "Ravmon"}, {
+                    "from": "Black King Numemon",
+                    "to": "Platinum Numemon"
+                }, {"from": "Black King Numemon", "to": "Metal Etemon"}, {
+                    "from": "Blue Meramon",
+                    "to": "Marsmon"
+                }, {"from": "Blue Meramon", "to": "Pharaohmon"}, {
+                    "from": "Vademon",
+                    "to": "Ebemon"
+                }, {"from": "Vademon", "to": "Avenge Kidmon"}, {
+                    "from": "Matadrmon",
+                    "to": "Grand Dracumon"
+                }, {"from": "Matadrmon", "to": "Slash Angemon"}, {
+                    "from": "Matadrmon",
+                    "to": "Kuzuhamon"
+                }, {"from": "Mummymon", "to": "Pharaohmon"}, {
+                    "from": "Mummymon",
+                    "to": "Hi Andromon"
+                }, {"from": "Mummymon", "to": "Avenge Kidmon"}, {
+                    "from": "Mistymon",
+                    "to": "Chaos Dukemon"
+                }, {"from": "Mistymon", "to": "Zanbamon"}, {
+                    "from": "Mistymon",
+                    "to": "Medieval Dukemon"
+                }, {"from": "Mistymon", "to": "Dynasmon"}, {
+                    "from": "Megadramon",
+                    "to": "Megidramon"
+                }, {"from": "Megadramon", "to": "Mugendramon"}, {
+                    "from": "Megalo Growmon",
+                    "to": "Megidramon"
+                }, {"from": "Megalo Growmon", "to": "Dukemon"}, {
+                    "from": "Megalo Growmon",
+                    "to": "Chaos Dukemon"
+                }, {"from": "Megalo Growmon", "to": "Chaosdramon"}, {
+                    "from": "Metal Tyranomon",
+                    "to": "Rust Tyranomon"
+                }, {"from": "Metal Tyranomon", "to": "Mugendramon"}, {
+                    "from": "Metal Tyranomon",
+                    "to": "Ultimate Brachiomon"
+                }, {"from": "Lucemon: Falldown Mode", "to": "Lucemon: Satan Mode"}, {
+                    "from": "Lady Devimon",
+                    "to": "Lilithmon"
+                }, {"from": "Lady Devimon", "to": "Beel Starmon"}, {
+                    "from": "Lady Devimon",
+                    "to": "Mastemon"
+                }, {"from": "Wisemon", "to": "Demon"}, {"from": "Wisemon", "to": "Chaos Dukemon"}, {
+                    "from": "Wisemon",
+                    "to": "Ancient Wisemon"
+                }, {"from": "Waru Seadramon", "to": "Leviamon"}, {
+                    "from": "Waru Seadramon",
+                    "to": "Megidramon"
+                }, {"from": "Waru Seadramon", "to": "Metal Seadramon"}, {
+                    "from": "Shakkoumon",
+                    "to": "Goddramon"
+                }, {"from": "Shakkoumon", "to": "Junomon"}, {
+                    "from": "Shakkoumon",
+                    "to": "Vikemon"
+                }, {"from": "Shakkoumon", "to": "Holydramon"}, {
+                    "from": "Silphymon",
+                    "to": "Beel Starmon"
+                }, {"from": "Silphymon", "to": "Minervamon"}, {
+                    "from": "Silphymon",
+                    "to": "Valkyrimon"
+                }, {"from": "Dinobeemon", "to": "Gran Kuwagamon"}, {
+                    "from": "Dinobeemon",
+                    "to": "Tiger Vespamon"
+                }, {"from": "Paildramon", "to": "Dorugoramon"}, {
+                    "from": "Paildramon",
+                    "to": "Imperialdramon: Dragon Mode"
+                }, {"from": "Paildramon", "to": "Darkdramon"}, {
+                    "from": "Infermon",
+                    "to": "Belial Vamdemon"
+                }, {"from": "Infermon", "to": "Diablomon"}, {
+                    "from": "Infermon",
+                    "to": "Cherubimon (Vice)"
+                }, {"from": "Aldamon", "to": "Kaiser Greymon"}, {
+                    "from": "Beowolfmon",
+                    "to": "Magna Garurumon"
+                }, {"from": "Apollomon", "to": "Grace Novamon"}, {
+                    "from": "Alphamon",
+                    "to": "Alphamon: Ouryuken"
+                }, {"from": "Valdurmon", "to": "Chaosmon: Valdur Arm"}, {
+                    "from": "War Greymon",
+                    "to": "Omegamon"
+                }, {"from": "Ouryumon", "to": "Alphamon: Ouryuken"}, {
+                    "from": "Craniummon",
+                    "to": "Enbarrmon Craniummon"
+                }, {"from": "Shine Greymon", "to": "Shine Greymon: Burst Mode"}, {
+                    "from": "Slayerdramon",
+                    "to": "Examon"
+                }, {"from": "Bancho Leomon", "to": "Chaosmon: Valdur Arm"}, {
+                    "from": "Bancho Leomon",
+                    "to": "Chaosmon"
+                }, {"from": "Jupitermon", "to": "Jupitermon: Wrath Mode"}, {
+                    "from": "Ravmon",
+                    "to": "Ravmon: Burst Mode"
+                }, {"from": "Ceresmon", "to": "Ceresmon Medium"}, {
+                    "from": "Ceresmon Medium",
+                    "to": "Ceresmon"
+                }, {"from": "Dianamon", "to": "Grace Novamon"}, {
+                    "from": "Duftmon",
+                    "to": "Duftmon: Leopard Mode"
+                }, {"from": "Duftmon: Leopard Mode", "to": "Duftmon"}, {
+                    "from": "Mirage Gaogamon",
+                    "to": "Mirage Gaogamon: Burst Mode"
+                }, {"from": "Metal Garurumon", "to": "Omegamon"}, {
+                    "from": "Rosemon",
+                    "to": "Rosemon: Burst Mode"
+                }, {"from": "Darkdramon", "to": "Chaosmon"}, {
+                    "from": "Titamon",
+                    "to": "Skull Baluchimon Titamon"
+                }, {"from": "Dukemon", "to": "Dukemon: Crimson Mode"}, {
+                    "from": "Bacchusmon",
+                    "to": "Bacchusmon Drunk"
+                }, {"from": "Bacchusmon Drunk", "to": "Bacchusmon"}, {
+                    "from": "Piemon",
+                    "to": "Apocalymon"
+                }, {"from": "Plutomon", "to": "Undead Plutomon"}, {
+                    "from": "Breakdramon",
+                    "to": "Examon"
+                }, {"from": "Beelzebumon", "to": "Beelzebumon: Blast Mode"}, {
+                    "from": "Belphemon: Sleep Mode",
+                    "to": "Belphemon: Rage Mode"
+                }, {"from": "Minervamon", "to": "Mervamon"}, {
+                    "from": "Mugendramon",
+                    "to": "Millenniumon"
+                }, {"from": "Junomon", "to": "Junomon: Hysteric Mode"},
+                    //{ "from": "Junomon: Hysteric Mode", "to": "Junomon" },
+                    {
+                        "from": "Imperialdramon: Dragon Mode",
+                        "to": "Imperialdramon: Fighter Mode"
+                    }, {
+                        "from": "Imperialdramon: Dragon Mode",
+                        "to": "Imperialdramon: Paladin Mode"
+                    }, {
+                        "from": "Imperialdramon: Fighter Mode",
+                        "to": "Imperialdramon: Paladin Mode"
+                    }, {"from": "Imperialdramon: Fighter Mode", "to": "Imperialdramon: Dragon Mode"}, {
+                        "from": "Diablomon",
+                        "to": "Armagemon"
+                    }, {"from": "Kaiser Greymon", "to": "Susanoomon"}, {
+                        "from": "Magna Garurumon",
+                        "to": "Susanoomon"
+                    }, {
+                        "from": "Magna Garurumon",
+                        "to": "Magna Garurumon: Separation"
+                    }, {"from": "Magna Garurumon: Separation", "to": "Magna Garurumon"}, {
+                        "from": "Omegamon",
+                        "to": "Omegamon Zwart"
+                    }, {"from": "Omegamon Zwart", "to": "Omegamon"}]
+            };
+            loadData(sampleData);
+        }
+
+        // Load data
+        function loadData(data) {
+            graph.clear();
+
+            // Add nodes
+            if (data.digimon) {
+                data.digimon.forEach(d => {
+                    graph.addNode(d.name, d);
+                });
+            }
+
+            // Add links
+            if (data.evolutions) {
+                data.evolutions.forEach(e => {
+                    graph.addLink(e.from, e.to);
+                });
+            }
+
+            updateVisualization();
+        }
+
+
+        // Initialize
+        window.addEventListener('load', () => {
+            initVisualization();
+            loadSampleData();
+        });
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            initVisualization();
+            if (graph.nodes.length > 0) {
+                updateVisualization();
+                updateHighlights();
+            }
+        });
+    </script>
+</body>
+</html>
