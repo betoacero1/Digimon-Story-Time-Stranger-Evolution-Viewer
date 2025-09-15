@@ -6,8 +6,8 @@ Welcome to the Digimon Evolution Navigator! This is an interactive visualization
 
 This tool is designed to be simple and accessible.
 
-*   **Online:** You can access the navigator directly through its GitHub Pages site: **[URL to be added here]**
-*   **Offline:** The entire visualization is contained within the single `digimon-evolution-navigator.html` file. You can download this file from the repository and open it in any modern web browser on your computer to use it offline.
+*   **Online:** You can access the navigator directly through its GitHub Pages site: https://betoacero1.github.io/Digimon-Story-Time-Stranger-Evolution-Viewer/
+*   **Offline:** The entire visualization is contained within the single `index.html` file. You can download this file from the repository and open it in any modern web browser on your computer to use it offline.
 
 ## Contributing & Support
 
